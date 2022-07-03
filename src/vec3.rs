@@ -331,7 +331,7 @@ mod tests {
 
     #[test]
     fn test_squared_length() {
-        assert_eq!(Vec3::new(1.0, 2.0, 3.0).squared_length(), 14.0 as f64);
+        assert_eq!(Vec3::new(1.0, 2.0, 3.0).squared_length(), 14.0);
     }
 
     #[test]
