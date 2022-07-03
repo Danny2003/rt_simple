@@ -19,16 +19,18 @@ fn hit_sphere(center: Vec3, radius: f64, r: Ray) -> f64 {
     }
 }
 fn ray_color(r: Ray) -> Vec3 {
-    if hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, r) != -1.0 {
-        Vec3::new(1.0, 0.0, 0.0)
+    let t = hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, r);
+    if t != -1.0 {
+        let n = Vec3::unit(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
+        Vec3::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0) * 0.5
     } else {
-        let unit_direction = Vec3::unit(&r.direction());
+        let unit_direction = Vec3::unit(r.direction());
         let t = 0.5 * (unit_direction.y() + 1.0);
         Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
     }
 }
 fn main() {
-    let file_name = "output/red_sphere.ppm";
+    let file_name = "output/A_sphere_colored_according_to_its_normal_vectors.ppm";
     let mut file = File::create(file_name).unwrap();
 
     // Image

@@ -67,12 +67,12 @@ impl Vec3 {
         )
     }
 
-    pub fn unit(&self) -> Self {
+    pub fn unit(self) -> Self {
         let length = self.length();
         if length == 0.0 {
             panic!("Divided by 0.0!");
         } else {
-            *self / length
+            self / length
         }
     }
 }
