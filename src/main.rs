@@ -5,13 +5,30 @@ mod vec3;
 pub use ray::Ray;
 use std::{fs::File, io::Write};
 pub use vec3::Vec3;
-fn ray_color(r: &Ray) -> Vec3 {
-    let unit_direction = Vec3::unit(&r.direction());
-    let t = 0.5 * (unit_direction.y() + 1.0);
-    Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
+fn hit_sphere(center: Vec3, radius: f64, r: Ray) -> f64 {
+    let oc = r.origin() - center;
+    let a = r.direction().squared_length();
+    let half_b = oc * r.direction();
+    let c = oc.squared_length() - radius * radius;
+    let discriminant = half_b * half_b - a * c;
+
+    if discriminant < 0.0 {
+        -1.0
+    } else {
+        (-half_b - discriminant.sqrt()) / a
+    }
+}
+fn ray_color(r: Ray) -> Vec3 {
+    if hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, r) != -1.0 {
+        Vec3::new(1.0, 0.0, 0.0)
+    } else {
+        let unit_direction = Vec3::unit(&r.direction());
+        let t = 0.5 * (unit_direction.y() + 1.0);
+        Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
+    }
 }
 fn main() {
-    let file_name = "output/blue2white.ppm";
+    let file_name = "output/red_sphere.ppm";
     let mut file = File::create(file_name).unwrap();
 
     // Image
@@ -51,7 +68,7 @@ fn main() {
                 origin,
                 lower_left_corner + horizontal * u + vertical * v - origin,
             );
-            let pixel_color = ray_color(&r);
+            let pixel_color = ray_color(r);
             write_color(pixel_color, &mut file);
         }
     }
