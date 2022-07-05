@@ -32,7 +32,7 @@ fn ray_color(r: Ray, world: &hit::HitList, depth: i32) -> Vec3 {
     Vec3::ones() * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
 }
 fn main() {
-    let file_name = "output/diffuse_sphere.ppm";
+    let file_name = "output/diffuse_sphere_with_gamma2.ppm";
     let mut file = File::create(file_name).unwrap();
 
     // Image
