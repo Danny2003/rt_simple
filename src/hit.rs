@@ -40,6 +40,11 @@ pub trait Hittable {
 pub struct HitList {
     pub list: Vec<Box<dyn Hittable>>,
 }
+impl Default for HitList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl HitList {
     pub fn new() -> Self {
         Self { list: Vec::new() }
