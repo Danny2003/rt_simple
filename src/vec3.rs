@@ -1,5 +1,5 @@
+use crate::rt_weekend;
 use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
-
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Vec3 {
     pub x: f64,
@@ -73,6 +73,32 @@ impl Vec3 {
             panic!("Divided by 0.0!");
         } else {
             self / length
+        }
+    }
+
+    pub fn random() -> Self {
+        Self::new(
+            rt_weekend::random_double(),
+            rt_weekend::random_double(),
+            rt_weekend::random_double(),
+        )
+    }
+
+    pub fn random_in_range(min: f64, max: f64) -> Self {
+        Self::new(
+            rt_weekend::random_double_in_range(min, max),
+            rt_weekend::random_double_in_range(min, max),
+            rt_weekend::random_double_in_range(min, max),
+        )
+    }
+
+    pub fn random_in_unit_sphere() -> Self {
+        loop {
+            let p = Self::random_in_range(-1.0, 1.0);
+            if p.squared_length() >= 1.0 {
+                continue;
+            }
+            return p;
         }
     }
 }
