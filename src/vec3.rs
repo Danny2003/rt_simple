@@ -122,6 +122,13 @@ impl Vec3 {
     pub fn reflect(v: &Vec3, n: &Vec3) -> Self {
         *v - *n * 2.0 * (*v * *n)
     }
+    // eta is etai_over_etat
+    pub fn refract(r_in: &Vec3, n: &Vec3, eta: f64) -> Self {
+        let cos_theta = -(*r_in * *n);
+        let r_out_perpendicular = (*r_in + *n * cos_theta) * eta;
+        let r_out_parallel = -*n * (1.0 - r_out_perpendicular.squared_length()).abs().sqrt();
+        r_out_perpendicular + r_out_parallel
+    }
 }
 
 impl Neg for Vec3 {

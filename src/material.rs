@@ -69,3 +69,33 @@ impl Material for Metal {
         scattered.direction() * rec.normal > 0.0
     }
 }
+
+// Dielectric material class that always refracts
+pub struct Dielectric {
+    ref_idx: f64,
+}
+impl Dielectric {
+    pub fn new(ref_idx: f64) -> Self {
+        Self { ref_idx }
+    }
+}
+impl Material for Dielectric {
+    fn scatter(
+        &self,
+        r_in: &Ray,
+        rec: &HitRecord,
+        attenuation: &mut Vec3,
+        scattered: &mut Ray,
+    ) -> bool {
+        *attenuation = Vec3::ones();
+        let refraction_ratio = if rec.front_face {
+            1.0 / self.ref_idx
+        } else {
+            self.ref_idx
+        };
+        let unit_direction = Vec3::unit(r_in.direction());
+        let refracted = Vec3::refract(&unit_direction, &rec.normal, refraction_ratio);
+        *scattered = Ray::new(rec.p, refracted);
+        true
+    }
+}
