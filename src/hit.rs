@@ -1,27 +1,28 @@
+use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
-#[derive(Clone, Copy)]
+use std::sync::Arc;
+#[derive(Clone)]
 pub struct HitRecord {
     pub p: Vec3,      // hitting point
     pub normal: Vec3, // the normal direction of the hitting surface
-    pub t: f64,       // hitting time
+    // We'll use shared pointers in our code,
+    // because it allows multiple geometries to share a common instance
+    // (for example, a bunch of spheres that all use the same texture map material),
+    // and because it makes memory management automatic and easier to reason about.
+    pub material: Arc<dyn Material>, // the material of the hitting surface
+    pub t: f64,                      // hitting time
     pub front_face: bool,
 }
 impl HitRecord {
-    pub fn new(p: Vec3, normal: Vec3, t: f64, front_face: bool) -> Self {
-        Self {
-            p,
-            normal,
-            t,
-            front_face,
-        }
-    }
-    pub fn zero() -> Self {
+    // impl a default constructor for HitRecord
+    pub fn new(material: Arc<dyn Material>) -> Self {
         Self {
             p: Vec3::zero(),
             normal: Vec3::zero(),
             t: 0.0,
-            front_face: false,
+            front_face: true,
+            material,
         }
     }
     pub fn set_face_normal(&mut self, r: Ray, outward_normal: Vec3) {
@@ -58,14 +59,14 @@ impl HitList {
 }
 impl Hittable for HitList {
     fn hit(&self, ray: Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
-        let mut temp_rec = HitRecord::zero();
+        let mut temp_rec: HitRecord = rec.clone();
         let mut hit_anything = false;
         let mut closest_so_far = t_max;
-        for object in &self.list {
+        for object in self.list.iter() {
             if object.hit(ray, t_min, closest_so_far, &mut temp_rec) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
-                *rec = temp_rec;
+                *rec = temp_rec.clone();
             }
         }
         hit_anything
