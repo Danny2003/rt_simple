@@ -12,11 +12,11 @@ mod sphere;
 use color::write_color;
 mod ray;
 mod vec3;
+use indicatif::ProgressBar;
 pub use ray::Ray;
 use std::sync::Arc;
 use std::{f64::INFINITY, fs::File, io::Write};
 pub use vec3::Vec3;
-use indicatif::ProgressBar;
 // ray_color() function decides the color of a ray.
 fn ray_color(r: Ray, world: &hit::HitList, depth: i32) -> Vec3 {
     if depth <= 0 {
@@ -95,8 +95,8 @@ fn main() {
         .expect("wrong write");
     file.write_all(b"\n255\n").expect("wrong write");
 
-    let bar = ProgressBar::new(image_height as u64);
-    println!("CI: false, multitask: false\nRendering...", );
+    let bar = ProgressBar::new((image_height + 1) as u64);
+    println!("CI: false, multitask: false\nRendering...",);
     for j in (0..image_height).rev() {
         for i in 0..image_width {
             let mut pixel_color = Vec3::zero();
@@ -112,5 +112,5 @@ fn main() {
         bar.inc(1);
     }
     bar.finish();
-    println!("Done!\nExtra Info: {}", author);
+    println!("Done!\nAuthor: {}", author);
 }
