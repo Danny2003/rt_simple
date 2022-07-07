@@ -39,7 +39,7 @@ fn ray_color(r: Ray, world: &hit::HitList, depth: i32) -> Vec3 {
     Vec3::ones() * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
 }
 fn main() {
-    let file_name = "output/Scene_with_metal_spheres.ppm";
+    let file_name = "output/Metal_spheres_with_fuzziness.ppm";
     let mut file = File::create(file_name).unwrap();
 
     // Image
@@ -55,8 +55,8 @@ fn main() {
     let mut world = hit::HitList::new();
     let material_ground = Lambertian::new(Vec3::new(0.8, 0.8, 0.0));
     let material_center = Lambertian::new(Vec3::new(0.7, 0.3, 0.3));
-    let material_left = Metal::new(Vec3::new(0.8, 0.8, 0.8));
-    let material_right = Metal::new(Vec3::new(0.8, 0.6, 0.2));
+    let material_left = Metal::new(Vec3::new(0.8, 0.8, 0.8), 0.3);
+    let material_right = Metal::new(Vec3::new(0.8, 0.6, 0.2), 1.0);
     world.add(Box::new(sphere::Sphere::new(
         Vec3::new(0.0, -100.5, -1.0),
         100.0,
