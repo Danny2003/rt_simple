@@ -41,7 +41,7 @@ fn ray_color(r: Ray, world: &hit::HitList, depth: i32) -> Vec3 {
 }
 fn main() {
     let author = "Youwei Zhong";
-    let file_name = "A_distant_view.ppm";
+    let file_name = "output/A_distant_view.ppm";
     let mut file = File::create(file_name).unwrap();
 
     // Image
