@@ -41,7 +41,7 @@ fn ray_color(r: Ray, world: &hit::HitList, depth: i32) -> Vec3 {
 }
 fn main() {
     let author = "Youwei Zhong";
-    let file_name = "output/A_distant_view.ppm";
+    let file_name = "output/Zooming_in.ppm";
     let mut file = File::create(file_name).unwrap();
 
     // Image
@@ -91,7 +91,7 @@ fn main() {
         Vec3::new(-2.0, 2.0, 1.0),
         Vec3::new(0.0, 0.0, -1.0),
         Vec3::new(0.0, 1.0, 0.0),
-        90.0,
+        20.0,
         aspect_ratio,
     );
 
