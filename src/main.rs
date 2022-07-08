@@ -41,7 +41,7 @@ fn ray_color(r: Ray, world: &hit::HitList, depth: i32) -> Vec3 {
 }
 fn main() {
     let author = "Youwei Zhong";
-    let file_name = "output/Scene_with_hollow_glass_sphere.ppm";
+    let file_name = "output/Scene_with_wide_angle_camera.ppm";
     let mut file = File::create(file_name).unwrap();
 
     // Image
@@ -53,41 +53,41 @@ fn main() {
     let max_depth = 50;
 
     // World
-
+    let r = (PI / 4.0).cos();
     let mut world = hit::HitList::new();
-    let material_ground = Arc::new(Lambertian::new(Vec3::new(0.8, 0.8, 0.0)));
-    let material_center = Arc::new(Lambertian::new(Vec3::new(0.1, 0.2, 0.5)));
-    let material_left = Arc::new(Dielectric::new(1.5));
-    let material_right = Arc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0));
+    // let material_ground = Arc::new(Lambertian::new(Vec3::new(0.8, 0.8, 0.0)));
+    // let material_center = Arc::new(Lambertian::new(Vec3::new(0.1, 0.2, 0.5)));
+    let material_left = Arc::new(Lambertian::new(Vec3::new(0.0, 0.0, 1.0)));
+    let material_right = Arc::new(Lambertian::new(Vec3::new(1.0, 0.0, 0.0)));
+    // world.add(Box::new(sphere::Sphere::new(
+    //     Vec3::new(0.0, -100.5, -1.0),
+    //     100.0,
+    //     material_ground,
+    // )));
+    // world.add(Box::new(sphere::Sphere::new(
+    //     Vec3::new(0.0, 0.0, -1.0),
+    //     0.5,
+    //     material_center,
+    // )));
+    // world.add(Box::new(sphere::Sphere::new(
+    //     Vec3::new(-1.0, 0.0, -1.0),
+    //     0.5,
+    //     material_left.clone(),
+    // )));
     world.add(Box::new(sphere::Sphere::new(
-        Vec3::new(0.0, -100.5, -1.0),
-        100.0,
-        material_ground,
-    )));
-    world.add(Box::new(sphere::Sphere::new(
-        Vec3::new(0.0, 0.0, -1.0),
-        0.5,
-        material_center,
-    )));
-    world.add(Box::new(sphere::Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        0.5,
-        material_left.clone(),
-    )));
-    world.add(Box::new(sphere::Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        -0.4,
+        Vec3::new(-r, 0.0, -1.0),
+        r,
         material_left,
     )));
     world.add(Box::new(sphere::Sphere::new(
-        Vec3::new(1.0, 0.0, -1.0),
-        0.5,
+        Vec3::new(r, 0.0, -1.0),
+        r,
         material_right,
     )));
 
     // Camera
 
-    let camera = Camera::new();
+    let camera = Camera::new(90.0, aspect_ratio);
 
     // Render
 
