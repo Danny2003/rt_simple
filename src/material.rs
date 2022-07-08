@@ -1,5 +1,6 @@
 use crate::hit::HitRecord;
 use crate::ray::Ray;
+use crate::rt_weekend::*;
 use crate::vec3::Vec3;
 /// utility function to compare f64 values
 pub fn fmin(a: f64, b: f64) -> f64 {
@@ -78,6 +79,21 @@ impl Material for Metal {
     }
 }
 /// Dielectric material class that always refracts when possible
+///
+/// # Approximation
+///
+/// Now real glass has reflectivity that varies with angle — look at a window at a steep angle and it becomes a mirror.
+/// There is a big ugly equation for that,
+/// but almost everybody uses a cheap and surprisingly accurate polynomial approximation by Christophe Schlick.
+/// This yields our full glass material.
+///
+/// # a Hollow Glass Sphere
+///
+/// An interesting and easy trick with dielectric spheres is
+/// to note that if you use a negative radius,
+/// the geometry is unaffected, but the surface normal points inward.
+/// This can be used as a bubble to make a hollow glass sphere
+///
 pub struct Dielectric {
     /// Index of Refraction
     ref_idx: f64,
@@ -85,6 +101,12 @@ pub struct Dielectric {
 impl Dielectric {
     pub fn new(ref_idx: f64) -> Self {
         Self { ref_idx }
+    }
+    fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
+        // Use Schlick's approximation for reflectance.
+        let mut r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+        r0 = r0 * r0;
+        r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
     }
 }
 impl Material for Dielectric {
@@ -107,11 +129,12 @@ impl Material for Dielectric {
         // If "cannot_refract", all the light is reflected,
         // and because in practice that is usually inside solid objects, it is called “total internal reflection”.
         let cannot_refract = refraction_ratio * sin_theta > 1.0;
-        let direction = if cannot_refract {
-            Vec3::reflect(&unit_direction, &rec.normal)
-        } else {
-            Vec3::refract(&unit_direction, &rec.normal, refraction_ratio)
-        };
+        let direction =
+            if cannot_refract || Self::reflectance(cos_theta, refraction_ratio) > random_double() {
+                Vec3::reflect(&unit_direction, &rec.normal)
+            } else {
+                Vec3::refract(&unit_direction, &rec.normal, refraction_ratio)
+            };
         *scattered = Ray::new(rec.p, direction);
         true
     }
