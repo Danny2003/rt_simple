@@ -1,6 +1,14 @@
 use crate::hit::HitRecord;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
+/// utility function to compare f64 values
+pub fn fmin(a: f64, b: f64) -> f64 {
+    if a > b {
+        b
+    } else {
+        a
+    }
+}
 pub trait Material {
     fn scatter(
         &self,
@@ -10,7 +18,6 @@ pub trait Material {
         scattered: &mut Ray,
     ) -> bool;
 }
-
 pub struct Lambertian {
     albedo: Vec3,
 }
@@ -20,9 +27,10 @@ impl Lambertian {
     }
 }
 impl Material for Lambertian {
+    /// # Arguments
+    /// * `_r_in` - an unused variable (if this is intentional, prefix it with an underscore) according to the warning
     fn scatter(
         &self,
-        // unused variable (if this is intentional, prefix it with an underscore) according to the warning
         _r_in: &Ray,
         rec: &HitRecord,
         attenuation: &mut Vec3,
@@ -38,7 +46,7 @@ impl Material for Lambertian {
         true
     }
 }
-// Metal material with reflectance function
+/// Metal material with reflectance function
 pub struct Metal {
     albedo: Vec3,
     fuzzy: f64,
@@ -65,13 +73,13 @@ impl Material for Metal {
             reflected + Vec3::random_in_unit_sphere() * self.fuzzy,
         );
         *attenuation = self.albedo;
-        // if the scattered ray is below the surface, return false
+        // if the scattered ray is below the surface, return false, which leads to the "absorption" of the light
         scattered.direction() * rec.normal > 0.0
     }
 }
-
-// Dielectric material class that always refracts
+/// Dielectric material class that always refracts when possible
 pub struct Dielectric {
+    /// Index of Refraction
     ref_idx: f64,
 }
 impl Dielectric {
@@ -94,8 +102,17 @@ impl Material for Dielectric {
             self.ref_idx
         };
         let unit_direction = Vec3::unit(r_in.direction());
-        let refracted = Vec3::refract(&unit_direction, &rec.normal, refraction_ratio);
-        *scattered = Ray::new(rec.p, refracted);
+        let cos_theta = fmin(-unit_direction * rec.normal, 1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+        // If "cannot_refract", all the light is reflected,
+        // and because in practice that is usually inside solid objects, it is called “total internal reflection”.
+        let cannot_refract = refraction_ratio * sin_theta > 1.0;
+        let direction = if cannot_refract {
+            Vec3::reflect(&unit_direction, &rec.normal)
+        } else {
+            Vec3::refract(&unit_direction, &rec.normal, refraction_ratio)
+        };
+        *scattered = Ray::new(rec.p, direction);
         true
     }
 }

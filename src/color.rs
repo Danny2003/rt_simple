@@ -1,6 +1,6 @@
 use crate::vec3::Vec3;
 use std::{fs::File, io::Write};
-// clamps the value x to the range [min,max]
+/// clamps the value x to the range [min,max]
 pub fn clamp(x: f64, min: f64, max: f64) -> f64 {
     if x < min {
         min
@@ -10,7 +10,7 @@ pub fn clamp(x: f64, min: f64, max: f64) -> f64 {
         x
     }
 }
-// the multi-sample write_color() function
+/// the multi-sample write_color() function
 pub fn write_color(pixel_color: Vec3, file: &mut File, samples_per_pixel: u32) {
     let mut r = pixel_color.x();
     let mut g = pixel_color.y();

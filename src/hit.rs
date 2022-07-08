@@ -4,18 +4,25 @@ use crate::vec3::Vec3;
 use std::sync::Arc;
 #[derive(Clone)]
 pub struct HitRecord {
-    pub p: Vec3,      // hitting point
-    pub normal: Vec3, // the normal direction of the hitting surface
-    // We'll use shared pointers in our code,
-    // because it allows multiple geometries to share a common instance
-    // (for example, a bunch of spheres that all use the same texture map material),
-    // and because it makes memory management automatic and easier to reason about.
-    pub material: Arc<dyn Material>, // the material of the hitting surface
-    pub t: f64,                      // hitting time
+    /// hitting point
+    pub p: Vec3,
+    /// the normal direction of the hitting surface
+    pub normal: Vec3,
+    /// ---------------------
+    /// We'll use shared pointers in our code,
+    /// because it allows multiple geometries to share a common instance
+    /// (for example, a bunch of spheres that all use the same texture map material),
+    /// and because it makes memory management automatic and easier to reason about.
+    /// ---------------------
+    /// the material of the hitting surface
+    pub material: Arc<dyn Material>,
+    /// hitting time
+    pub t: f64,
+    /// whether the hit happens on the front face of the hitting surface
     pub front_face: bool,
 }
 impl HitRecord {
-    // impl a default constructor for HitRecord
+    /// impl a default constructor for HitRecord
     pub fn new(material: Arc<dyn Material>) -> Self {
         Self {
             p: Vec3::zero(),
@@ -37,8 +44,8 @@ impl HitRecord {
 pub trait Hittable {
     fn hit(&self, ray: Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool;
 }
-// Box<dyn Hittable> is a trait object, which is a pointer to a dynamically allocated object.
 pub struct HitList {
+    /// Box<dyn Hittable> is a trait object, which is a pointer to a dynamically allocated object.
     pub list: Vec<Box<dyn Hittable>>,
 }
 impl Default for HitList {
