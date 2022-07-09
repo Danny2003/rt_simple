@@ -41,7 +41,7 @@ fn ray_color(r: Ray, world: &hit::HitList, depth: i32) -> Vec3 {
 }
 fn main() {
     let author = "Youwei Zhong";
-    let file_name = "output/Zooming_in.ppm";
+    let file_name = "output/ Scene_camera_with_depth-of-field.ppm";
     let mut file = File::create(file_name).unwrap();
 
     // Image
@@ -87,12 +87,19 @@ fn main() {
 
     // Camera
 
+    let look_from = Vec3::new(3., 3., 2.);
+    let look_at = Vec3::new(0., 0., -1.);
+    let vup = Vec3::new(0., 1., 0.);
+    let dist_to_focus = (look_from - look_at).length();
+    let aperture = 2.;
     let camera = Camera::new(
-        Vec3::new(-2.0, 2.0, 1.0),
-        Vec3::new(0.0, 0.0, -1.0),
-        Vec3::new(0.0, 1.0, 0.0),
-        20.0,
+        look_from,
+        look_at,
+        vup,
+        20.,
         aspect_ratio,
+        aperture,
+        dist_to_focus,
     );
 
     // Render

@@ -1,4 +1,4 @@
-use crate::rt_weekend;
+use crate::rt_weekend::*;
 use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Vec3 {
@@ -64,17 +64,13 @@ impl Vec3 {
         }
     }
     pub fn random() -> Self {
-        Self::new(
-            rt_weekend::random_double(),
-            rt_weekend::random_double(),
-            rt_weekend::random_double(),
-        )
+        Self::new(random_double(), random_double(), random_double())
     }
     pub fn random_in_range(min: f64, max: f64) -> Self {
         Self::new(
-            rt_weekend::random_double_in_range(min, max),
-            rt_weekend::random_double_in_range(min, max),
-            rt_weekend::random_double_in_range(min, max),
+            random_double_in_range(min, max),
+            random_double_in_range(min, max),
+            random_double_in_range(min, max),
         )
     }
     pub fn random_in_unit_sphere() -> Self {
@@ -113,6 +109,19 @@ impl Vec3 {
         let r_out_perpendicular = (*r_in + *n * cos_theta) * eta;
         let r_out_parallel = -*n * (1.0 - r_out_perpendicular.squared_length()).abs().sqrt();
         r_out_perpendicular + r_out_parallel
+    }
+    pub fn random_in_unit_disk() -> Self {
+        loop {
+            let p = Vec3::new(
+                random_double_in_range(-1., 1.),
+                random_double_in_range(-1., 1.),
+                0.,
+            );
+            if p.squared_length() >= 1. {
+                continue;
+            }
+            return p;
+        }
     }
 }
 impl Neg for Vec3 {
