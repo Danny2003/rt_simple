@@ -10,6 +10,7 @@ mod rt_weekend;
 pub use rt_weekend::*;
 mod sphere;
 use color::write_color;
+use sphere::Sphere;
 mod ray;
 mod vec3;
 use indicatif::ProgressBar;
@@ -17,6 +18,56 @@ pub use ray::Ray;
 use std::sync::Arc;
 use std::{f64::INFINITY, fs::File, io::Write};
 pub use vec3::Vec3;
+fn random_scene() -> HitList {
+    let mut world = HitList::new();
+
+    let ground_material = Arc::new(Lambertian::new(Vec3::new(0.5, 0.5, 0.5)));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0., -1000., 0.),
+        1000.,
+        ground_material,
+    )));
+
+    for a in -11..11 {
+        for b in -11..11 {
+            // choose material
+            let choose_mat = random_double();
+            let center = Vec3::new(
+                a as f64 + 0.9 * random_double(),
+                0.2,
+                b as f64 + 0.9 * random_double(),
+            );
+            // 1.2^2 -0.8^2 < 0.9^2 to prevent being too close to the right sphere
+            if (center - Vec3::new(4., 0.2, 0.)).length() > 0.9 {
+                let sphere_material: Arc<dyn Material> = if choose_mat < 0.8 {
+                    // diffuse: 80%
+                    let albedo = Vec3::elemul(Vec3::random(), Vec3::random());
+                    Arc::new(Lambertian::new(albedo))
+                } else if choose_mat < 0.95 {
+                    // metal: 15%
+                    let albedo = Vec3::random_in_range(0.5, 1.);
+                    let fuzz = random_double_in_range(0., 0.5);
+                    Arc::new(Metal::new(albedo, fuzz))
+                } else {
+                    // glass: 5%
+                    Arc::new(Dielectric::new(1.5))
+                };
+                world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+            }
+        }
+    }
+    // centre
+    let material1 = Arc::new(Dielectric::new(1.5));
+    world.add(Box::new(Sphere::new(Vec3::new(0., 1., 0.), 1., material1)));
+    // left
+    let material2 = Arc::new(Lambertian::new(Vec3::new(0.4, 0.2, 0.1)));
+    world.add(Box::new(Sphere::new(Vec3::new(-4., 1., 0.), 1., material2)));
+    // right
+    let material3 = Arc::new(Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.));
+    world.add(Box::new(Sphere::new(Vec3::new(4., 1., 0.), 1., material3)));
+
+    world
+}
 /// ray_color() function decides the color of a ray.
 fn ray_color(r: Ray, world: &hit::HitList, depth: i32) -> Vec3 {
     if depth <= 0 {
@@ -41,57 +92,69 @@ fn ray_color(r: Ray, world: &hit::HitList, depth: i32) -> Vec3 {
 }
 fn main() {
     let author = "Youwei Zhong";
-    let file_name = "output/ Scene_camera_with_depth-of-field.ppm";
+    let file_name = "output/Image_21:Final_scene.ppm";
     let mut file = File::create(file_name).unwrap();
 
     // Image
 
-    let aspect_ratio = 16.0 / 9.0;
-    let image_width = 400;
+    // let aspect_ratio = 16.0 / 9.0;
+    let aspect_ratio = 3.0 / 2.0;
+    // let image_width = 400;
+    let image_width = 1200;
     let image_height = (image_width as f64 / aspect_ratio).floor() as i32;
-    let samples_per_pixel = 100;
+    // let samples_per_pixel = 100;
+    let samples_per_pixel = 500;
     let max_depth = 50;
 
     // World
+
+    let world = random_scene();
+
     // let r = (PI / 4.0).cos();
-    let mut world = hit::HitList::new();
-    let material_ground = Arc::new(Lambertian::new(Vec3::new(0.8, 0.8, 0.0)));
-    let material_center = Arc::new(Lambertian::new(Vec3::new(0.1, 0.2, 0.5)));
-    let material_left = Arc::new(Dielectric::new(1.5));
-    let material_right = Arc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0));
-    world.add(Box::new(sphere::Sphere::new(
-        Vec3::new(0.0, -100.5, -1.0),
-        100.0,
-        material_ground,
-    )));
-    world.add(Box::new(sphere::Sphere::new(
-        Vec3::new(0.0, 0.0, -1.0),
-        0.5,
-        material_center,
-    )));
-    world.add(Box::new(sphere::Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        0.5,
-        material_left.clone(),
-    )));
-    world.add(Box::new(sphere::Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        -0.45,
-        material_left,
-    )));
-    world.add(Box::new(sphere::Sphere::new(
-        Vec3::new(1.0, 0.0, -1.0),
-        0.5,
-        material_right,
-    )));
+
+    // Image 20: Spheres with depth-of-field
+
+    // let mut world = hit::HitList::new();
+    // let material_ground = Arc::new(Lambertian::new(Vec3::new(0.8, 0.8, 0.0)));
+    // let material_center = Arc::new(Lambertian::new(Vec3::new(0.1, 0.2, 0.5)));
+    // let material_left = Arc::new(Dielectric::new(1.5));
+    // let material_right = Arc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0));
+    // world.add(Box::new(sphere::Sphere::new(
+    //     Vec3::new(0.0, -100.5, -1.0),
+    //     100.0,
+    //     material_ground,
+    // )));
+    // world.add(Box::new(sphere::Sphere::new(
+    //     Vec3::new(0.0, 0.0, -1.0),
+    //     0.5,
+    //     material_center,
+    // )));
+    // world.add(Box::new(sphere::Sphere::new(
+    //     Vec3::new(-1.0, 0.0, -1.0),
+    //     0.5,
+    //     material_left.clone(),
+    // )));
+    // world.add(Box::new(sphere::Sphere::new(
+    //     Vec3::new(-1.0, 0.0, -1.0),
+    //     -0.45,
+    //     material_left,
+    // )));
+    // world.add(Box::new(sphere::Sphere::new(
+    //     Vec3::new(1.0, 0.0, -1.0),
+    //     0.5,
+    //     material_right,
+    // )));
 
     // Camera
 
-    let look_from = Vec3::new(3., 3., 2.);
-    let look_at = Vec3::new(0., 0., -1.);
+    // let look_from = Vec3::new(3., 3., 2.);
+    let look_from = Vec3::new(13., 2., 3.);
+    // let look_at = Vec3::new(0., 0., -1.);
+    let look_at = Vec3::new(0., 0., 0.);
     let vup = Vec3::new(0., 1., 0.);
-    let dist_to_focus = (look_from - look_at).length();
-    let aperture = 2.;
+    // let dist_to_focus = (look_from - look_at).length();
+    let dist_to_focus = 10.;
+    let aperture = 0.1;
     let camera = Camera::new(
         look_from,
         look_at,

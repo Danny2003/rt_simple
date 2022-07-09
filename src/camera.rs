@@ -2,6 +2,7 @@ use crate::ray::Ray;
 use crate::rt_weekend::*;
 use crate::vec3::Vec3;
 /// Camera decides the direction of the ray according to the pixel's position.
+#[allow(dead_code)]
 pub struct Camera {
     origin: Vec3,
     lower_left_corner: Vec3,
@@ -17,6 +18,7 @@ impl Camera {
     /// # Arguments
     ///
     /// * `vfov` - vertical field-of-view in degrees
+    /// * `aperture` - aperture's radius of the camera
     pub fn new(
         look_from: Vec3,
         look_at: Vec3,
