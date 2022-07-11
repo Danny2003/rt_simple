@@ -124,7 +124,7 @@ fn main() {
     let samples_per_pixel = 100;
     // let samples_per_pixel = 500;
     let max_depth = 50;
-
+    println!("TESTING...");
     println!(
         "Image size: {}\nJPEG quality: {}",
         style(image_width.to_string() + &'x'.to_string() + &image_height.to_string()).yellow(),
