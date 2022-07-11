@@ -10,14 +10,18 @@ mod rt_weekend;
 pub use rt_weekend::*;
 mod sphere;
 use color::write_color;
-use sphere::Sphere;
+use sphere::*;
 mod ray;
 mod vec3;
-use indicatif::ProgressBar;
 pub use ray::Ray;
 use std::sync::Arc;
-use std::{f64::INFINITY, fs::File, io::Write};
+use std::{f64::INFINITY, fs::File, process::exit};
 pub use vec3::Vec3;
+
+use console::style;
+use image::{ImageBuffer, RgbImage};
+use indicatif::{ProgressBar, ProgressStyle};
+
 fn random_scene() -> HitList {
     let mut world = HitList::new();
 
@@ -52,7 +56,19 @@ fn random_scene() -> HitList {
                     // glass: 5%
                     Arc::new(Dielectric::new(1.5))
                 };
-                world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                if choose_mat < 0.8 {
+                    let center2 = center + Vec3::new(0., random_double_in_range(0., 0.5), 0.);
+                    world.add(Box::new(MovingSphere::new(
+                        center,
+                        center2,
+                        0.,
+                        1.,
+                        0.2,
+                        sphere_material,
+                    )));
+                } else {
+                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                }
             }
         }
     }
@@ -91,20 +107,43 @@ fn ray_color(r: Ray, world: &hit::HitList, depth: i32) -> Vec3 {
     Vec3::ones() * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
 }
 fn main() {
+    print!("{}[2J", 27 as char); // Clear screen
+    print!("{esc}[2J{esc}[1;1H", esc = 27 as char); // Set cursor position as 1,1
+    let quality = 100; // From 0 to 100
+
     let author = "Youwei Zhong";
-    let file_name = "output/Image_21:Final_scene.ppm";
-    let mut file = File::create(file_name).unwrap();
+    let path = "output/Bouncing_spheres.jpg";
 
     // Image
 
-    // let aspect_ratio = 16.0 / 9.0;
-    let aspect_ratio = 3.0 / 2.0;
-    // let image_width = 400;
-    let image_width = 1200;
-    let image_height = (image_width as f64 / aspect_ratio).floor() as i32;
-    // let samples_per_pixel = 100;
-    let samples_per_pixel = 500;
+    let aspect_ratio = 16.0 / 9.0;
+    // let aspect_ratio = 3.0 / 2.0;
+    let image_width = 400;
+    // let image_width = 1200;
+    let image_height = (image_width as f64 / aspect_ratio).floor() as u32;
+    let samples_per_pixel = 100;
+    // let samples_per_pixel = 500;
     let max_depth = 50;
+
+    println!(
+        "Image size: {}\nJPEG quality: {}",
+        style(image_width.to_string() + &'x'.to_string() + &image_height.to_string()).yellow(),
+        style(quality.to_string()).yellow(),
+    );
+
+    // Create image data
+    let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
+    // Progress bar UI powered by library `indicatif`
+    // Get environment variable CI, which is true for GitHub Action
+    let progress = if option_env!("CI").unwrap_or_default() == "true" {
+        ProgressBar::hidden()
+    } else {
+        ProgressBar::new(image_height as u64)
+    };
+    progress.set_style(ProgressStyle::default_bar()
+        .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] [{pos}/{len}] ({eta})")
+        .progress_chars("#>-"));
+    progress.set_message("Rendering...");
 
     // World
 
@@ -163,21 +202,23 @@ fn main() {
         aspect_ratio,
         aperture,
         dist_to_focus,
+        0.,
+        1.,
     );
 
     // Render
 
-    file.write_all(b"P3\n").expect("wrong write");
-    file.write_all(b" ").expect("wrong write");
-    file.write_all(image_width.to_string().as_bytes())
-        .expect("wrong write");
-    file.write_all(b" ").expect("wrong write");
-    file.write_all(image_height.to_string().as_bytes())
-        .expect("wrong write");
-    file.write_all(b"\n255\n").expect("wrong write");
+    // ppm format
+    // file.write_all(b"P3\n").expect("wrong write");
+    // file.write_all(b" ").expect("wrong write");
+    // file.write_all(image_width.to_string().as_bytes())
+    //     .expect("wrong write");
+    // file.write_all(b" ").expect("wrong write");
+    // file.write_all(image_height.to_string().as_bytes())
+    //     .expect("wrong write");
+    // file.write_all(b"\n255\n").expect("wrong write");
 
-    let bar = ProgressBar::new((image_height + 1) as u64);
-    println!("CI: false, multitask: false\nRendering...",);
+    // let bar = ProgressBar::new((image_height + 1) as u64);
     for j in (0..image_height).rev() {
         for i in 0..image_width {
             let mut pixel_color = Vec3::zero();
@@ -188,10 +229,28 @@ fn main() {
                 let r = camera.get_ray(u, v);
                 pixel_color += ray_color(r, &world, max_depth);
             }
-            write_color(pixel_color, &mut file, samples_per_pixel);
+            write_color(
+                pixel_color,
+                samples_per_pixel,
+                &mut img,
+                i,
+                image_height - j - 1,
+            );
         }
-        bar.inc(1);
+        progress.inc(1);
     }
-    bar.finish();
+    progress.finish();
+
+    // Output image to file
+    println!("Output image as \"{}\"", style(path).yellow());
     println!("Done!\nAuthor: {}", author);
+    let output_image = image::DynamicImage::ImageRgb8(img);
+    let mut output_file = File::create(path).unwrap();
+    match output_image.write_to(&mut output_file, image::ImageOutputFormat::Jpeg(quality)) {
+        Ok(_) => {}
+        // Err(_) => panic!("Outputting image fails."),
+        Err(_) => println!("{}", style("Outputting image fails.").red()),
+    }
+
+    exit(0);
 }

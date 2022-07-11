@@ -12,6 +12,8 @@ pub struct Camera {
     v: Vec3,
     w: Vec3,
     lens_radius: f64,
+    time0: f64,
+    time1: f64,
 }
 impl Camera {
     /// The constructor of the Camera.
@@ -19,6 +21,7 @@ impl Camera {
     ///
     /// * `vfov` - vertical field-of-view in degrees
     /// * `aperture` - aperture's radius of the camera
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         look_from: Vec3,
         look_at: Vec3,
@@ -27,6 +30,8 @@ impl Camera {
         aspect_ratio: f64,
         aperture: f64,
         focus_dist: f64,
+        _time0: f64,
+        _time1: f64,
     ) -> Self {
         let theta = degrees_to_radians(vfov);
         let h = (theta / 2.0).tan();
@@ -47,6 +52,8 @@ impl Camera {
                 - v * viewport_height / 2.0 * focus_dist
                 - w * focus_dist,
             lens_radius: aperture / 2.,
+            time0: _time0,
+            time1: _time1,
         }
     }
     pub fn get_ray(&self, s: f64, t: f64) -> Ray {
@@ -57,6 +64,7 @@ impl Camera {
             dir: self.lower_left_corner + self.horizontal * s + self.vertical * t
                 - self.origin
                 - offset,
+            time: random_double_in_range(self.time0, self.time1),
         }
     }
 }

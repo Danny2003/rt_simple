@@ -1,5 +1,5 @@
 use crate::vec3::Vec3;
-use std::{fs::File, io::Write};
+use image::RgbImage;
 /// clamps the value x to the range [min,max]
 pub fn clamp(x: f64, min: f64, max: f64) -> f64 {
     if x < min {
@@ -11,7 +11,7 @@ pub fn clamp(x: f64, min: f64, max: f64) -> f64 {
     }
 }
 /// the multi-sample write_color() function
-pub fn write_color(pixel_color: Vec3, file: &mut File, samples_per_pixel: u32) {
+pub fn write_color(pixel_color: Vec3, samples_per_pixel: u32, img: &mut RgbImage, i: u32, j: u32) {
     let mut r = pixel_color.x();
     let mut g = pixel_color.y();
     let mut b = pixel_color.z();
@@ -22,26 +22,11 @@ pub fn write_color(pixel_color: Vec3, file: &mut File, samples_per_pixel: u32) {
     g = (scale * g).sqrt();
     b = (scale * b).sqrt();
 
+    let pixel = img.get_pixel_mut(i, j);
+    *pixel = image::Rgb([
+        (256.0 * clamp(r, 0.0, 0.999)).floor() as u8,
+        (256.0 * clamp(g, 0.0, 0.999)).floor() as u8,
+        (256.0 * clamp(b, 0.0, 0.999)).floor() as u8,
+    ]);
     // Write the translated [0,255] value of each color component.
-    file.write_all(
-        ((256.0 * clamp(r, 0.0, 0.999)).floor() as i32)
-            .to_string()
-            .as_bytes(),
-    )
-    .expect("wrong write");
-    file.write_all(b" ").expect("wrong write");
-    file.write_all(
-        ((256.0 * clamp(g, 0.0, 0.999)).floor() as i32)
-            .to_string()
-            .as_bytes(),
-    )
-    .expect("wrong write");
-    file.write_all(b" ").expect("wrong write");
-    file.write_all(
-        ((256.0 * clamp(b, 0.0, 0.999)).floor() as i32)
-            .to_string()
-            .as_bytes(),
-    )
-    .expect("wrong write");
-    file.write_all(b"\n").expect("wrong write");
 }
