@@ -11,7 +11,13 @@ pub fn clamp(x: f64, min: f64, max: f64) -> f64 {
     }
 }
 /// the multi-sample write_color() function
-pub fn write_color(pixel_color: Vec3, samples_per_pixel: u32, img: &mut RgbImage, i: u32, j: u32) {
+pub fn write_color(
+    pixel_color: Vec3,
+    samples_per_pixel: usize,
+    img: &mut RgbImage,
+    i: usize,
+    j: usize,
+) {
     let mut r = pixel_color.x();
     let mut g = pixel_color.y();
     let mut b = pixel_color.z();
@@ -22,7 +28,7 @@ pub fn write_color(pixel_color: Vec3, samples_per_pixel: u32, img: &mut RgbImage
     g = (scale * g).sqrt();
     b = (scale * b).sqrt();
 
-    let pixel = img.get_pixel_mut(i, j);
+    let pixel = img.get_pixel_mut(i.try_into().unwrap(), j.try_into().unwrap());
     *pixel = image::Rgb([
         (256.0 * clamp(r, 0.0, 0.999)).floor() as u8,
         (256.0 * clamp(g, 0.0, 0.999)).floor() as u8,

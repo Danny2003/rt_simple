@@ -41,12 +41,13 @@ impl HitRecord {
         };
     }
 }
-pub trait Hittable {
+pub trait Hittable: Sync + Send {
     fn hit(&self, ray: Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool;
 }
+#[derive(Clone)]
 pub struct HitList {
     /// Box<dyn Hittable> is a trait object, which is a pointer to a dynamically allocated object.
-    pub list: Vec<Box<dyn Hittable>>,
+    pub list: Vec<Arc<dyn Hittable>>,
 }
 impl Default for HitList {
     fn default() -> Self {
@@ -57,7 +58,7 @@ impl HitList {
     pub fn new() -> Self {
         Self { list: Vec::new() }
     }
-    pub fn add(&mut self, object: Box<dyn Hittable>) {
+    pub fn add(&mut self, object: Arc<dyn Hittable>) {
         self.list.push(object);
     }
     pub fn clear(&mut self) {

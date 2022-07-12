@@ -10,7 +10,7 @@ pub fn fmin(a: f64, b: f64) -> f64 {
         a
     }
 }
-pub trait Material {
+pub trait Material: Sync + Send {
     fn scatter(
         &self,
         r_in: &Ray,
