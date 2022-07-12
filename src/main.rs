@@ -24,6 +24,7 @@ pub use vec3::Vec3;
 
 use console::style;
 use image::{ImageBuffer, RgbImage};
+#[allow(unused_imports)]
 use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
 
 fn random_scene() -> HitList {
