@@ -92,7 +92,7 @@ fn random_scene() -> HitList {
 //---------------------------------------------------------------------------------
 
 /// ray_color() function decides the color of a ray.
-fn ray_color(r: Ray, world: Arc<hit::HitList>, depth: i32) -> Vec3 {
+fn ray_color(r: Ray, world: &Arc<hit::HitList>, depth: i32) -> Vec3 {
     if depth <= 0 {
         return Vec3::zero();
     }
@@ -123,11 +123,11 @@ fn main() {
     println!(
         "{} 💿 {}",
         style("[1/5]").bold().dim(),
-        style("Initlizing...").green()
+        style("Initializing...").green()
     );
     let begin_time = Instant::now();
 
-    const THREAD_NUMBER: usize = 7;
+    const THREAD_NUMBER: usize = 16;
 
     const AUTHOR: &str = "Youwei Zhong";
     const PATH: &str = "output/Bouncing_spheres_multithread.jpg";
@@ -249,8 +249,8 @@ fn main() {
     let mut output_pixel_color = Vec::<Vec3>::new();
     let mut thread_pool = VecDeque::<_>::new();
     // Manages multiple progress bars from different threads
-    let multiprogress = Arc::new(MultiProgress::new());
-    multiprogress.set_move_cursor(true); // turn on this to reduce flickering
+    // let multiprogress = Arc::new(MultiProgress::new());
+    // multiprogress.set_move_cursor(true); // turn on this to reduce flickering
 
     for thread_id in 0..THREAD_NUMBER {
         let line_beg = SECTION_LINE_NUM * thread_id;
@@ -261,25 +261,25 @@ fn main() {
         } else {
             line_beg + SECTION_LINE_NUM
         };
-        let mp = multiprogress.clone();
-        // Progress bar UI powered by library `indicatif`
-        // Get environment variable CI, which is true for GitHub Action
-        let progress_bar = if option_env!("CI").unwrap_or_default() == "true" {
-            ProgressBar::hidden()
-        } else {
-            mp.add(ProgressBar::new((line_end - line_beg) as u64))
-        };
-        progress_bar.set_style(ProgressStyle::default_bar()
-        .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] [{pos}/{len}] ({eta})")
-        .progress_chars("#>-"));
+        // let mp = multiprogress.clone();
+        // // Progress bar UI powered by library `indicatif`
+        // // Get environment variable CI, which is true for GitHub Action
+        // let progress_bar = if option_env!("CI").unwrap_or_default() == "true" {
+        //     ProgressBar::hidden()
+        // } else {
+        //     mp.add(ProgressBar::new((line_end - line_beg) as u64))
+        // };
+        // progress_bar.set_style(ProgressStyle::default_bar()
+        // .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] [{pos}/{len}] ({eta})")
+        // .progress_chars("#>-"));
 
         let (tx, rx) = mpsc::channel();
         let camera_clone = camera.clone();
         let world_clone = world.clone();
         thread_pool.push_back((
             thread::spawn(move || {
-                let mut progress = 0;
-                progress_bar.set_position(0);
+                // let mut progress = 0;
+                // progress_bar.set_position(0);
 
                 let channel_send = tx.clone();
 
@@ -293,21 +293,21 @@ fn main() {
                             let u = (i as f64 + random_double()) / (IMAGE_WIDTH as f64);
                             let v = (j as f64 + random_double()) / (IMAGE_HEIGHT as f64);
                             let r = camera_clone.get_ray(u, v);
-                            pixel_color += ray_color(r, world_clone.clone(), MAX_DEPTH);
+                            pixel_color += ray_color(r, &world_clone, MAX_DEPTH);
                         }
                         section_pixel_color.push(pixel_color);
                     }
-                    progress += 1;
-                    progress_bar.set_position(progress);
+                    // progress += 1;
+                    // progress_bar.set_position(progress);
                 }
                 channel_send.send(section_pixel_color).unwrap();
-                progress_bar.finish_with_message("Finished.");
+                // progress_bar.finish_with_message("Finished.");
             }),
             rx,
         ));
     }
     // 等待所有线程结束
-    multiprogress.join().unwrap();
+    // multiprogress.join().unwrap();
 
     //========================================================
 
@@ -372,7 +372,7 @@ fn main() {
     println!(
         "{} 🥽 {}",
         style("[5/5]").bold().dim(),
-        style("Outping Image...").green()
+        style("Outputting Image...").green()
     );
 
     // Output image to file
