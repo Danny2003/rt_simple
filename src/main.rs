@@ -10,6 +10,7 @@ mod camera;
 mod color;
 mod hit;
 mod material;
+mod perlin;
 mod scene;
 mod texture;
 pub use camera::Camera;
@@ -75,7 +76,7 @@ fn main() {
     const THREAD_NUMBER: usize = 16;
 
     const AUTHOR: &str = "Youwei Zhong";
-    const PATH: &str = "output/Checkered_spheres.jpg";
+    const PATH: &str = "output/Hashed_random_texture.jpg";
 
     //---------------------------------------------------------------------------------
 
@@ -122,8 +123,14 @@ fn main() {
             vfov = 20.0;
             aperture = 0.1;
         }
-        _ => {
+        2 => {
             hit_list = Arc::new(two_spheres());
+            look_from = Vec3::new(13., 2., 3.);
+            look_at = Vec3::new(0., 0., 0.);
+            vfov = 20.0;
+        }
+        _ => {
+            hit_list = Arc::new(two_perlin_spheres());
             look_from = Vec3::new(13., 2., 3.);
             look_at = Vec3::new(0., 0., 0.);
             vfov = 20.0;

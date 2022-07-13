@@ -97,3 +97,18 @@ pub fn two_spheres() -> HitList {
     )));
     world
 }
+pub fn two_perlin_spheres() -> HitList {
+    let mut world = HitList::new();
+    let pertext = Arc::new(NoiseTexture::new());
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0., -1000., 0.),
+        1000.,
+        Arc::new(Lambertian::new_texture(pertext.clone())),
+    )));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0., 2., 0.),
+        2.,
+        Arc::new(Lambertian::new_texture(pertext)),
+    )));
+    world
+}
