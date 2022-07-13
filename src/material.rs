@@ -1,7 +1,9 @@
 use crate::hit::HitRecord;
 use crate::ray::Ray;
 use crate::rt_weekend::*;
+use crate::texture::*;
 use crate::vec3::Vec3;
+use std::sync::Arc;
 /// utility function to compare f64 values
 pub fn fmin(a: f64, b: f64) -> f64 {
     if a > b {
@@ -19,12 +21,18 @@ pub trait Material: Sync + Send {
         scattered: &mut Ray,
     ) -> bool;
 }
+/// We can make textured materials by replacing the `Vec3` a with a texture pointer:
 pub struct Lambertian {
-    albedo: Vec3,
+    albedo: Arc<dyn Texture>,
 }
 impl Lambertian {
-    pub fn new(albedo: Vec3) -> Self {
-        Self { albedo }
+    pub fn new(a: Vec3) -> Self {
+        Self {
+            albedo: Arc::new(SolidColor::new(a)),
+        }
+    }
+    pub fn new_texture(a: Arc<dyn Texture>) -> Self {
+        Self { albedo: a }
     }
 }
 impl Material for Lambertian {
@@ -43,7 +51,7 @@ impl Material for Lambertian {
             scatter_direction = rec.normal;
         }
         *scattered = Ray::new(rec.p, scatter_direction, _r_in.time());
-        *attenuation = self.albedo;
+        *attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
         true
     }
 }

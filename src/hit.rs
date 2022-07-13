@@ -19,6 +19,9 @@ pub struct HitRecord {
     pub material: Arc<dyn Material>,
     /// hitting time
     pub t: f64,
+    /// the U,V surface coordinates of the ray-object hit point
+    pub u: f64,
+    pub v: f64,
     /// whether the hit happens on the front face of the hitting surface
     pub front_face: bool,
 }
@@ -31,6 +34,8 @@ impl HitRecord {
             t: 0.0,
             front_face: true,
             material,
+            u: 0.,
+            v: 0.,
         }
     }
     pub fn set_face_normal(&mut self, r: &Ray, outward_normal: Vec3) {

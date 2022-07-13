@@ -1,3 +1,8 @@
+///
+/// The progress bar, information on the terminal, and the multithread part is borrowed from the following person:
+/// [@PaperL](https://github.com/PaperL/), an ACM Class TA
+/// He is the author of the [PPCA-Raytracer-2022](https://github.com/ACMClassCourse-2021/PPCA-Raytracer-2022) project.
+///
 extern crate rand;
 mod aabb;
 mod bvh;
@@ -5,6 +10,7 @@ mod camera;
 mod color;
 mod hit;
 mod material;
+mod texture;
 pub use camera::Camera;
 pub use hit::*;
 use material::*;
@@ -13,6 +19,7 @@ pub use rt_weekend::*;
 mod sphere;
 use color::write_color;
 use sphere::*;
+use texture::CheckerTexture;
 mod ray;
 mod vec3;
 use crate::bvh::BVHNode;
@@ -33,12 +40,22 @@ use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
 fn random_scene() -> HitList {
     let mut world = HitList::new();
 
-    let ground_material = Arc::new(Lambertian::new(Vec3::new(0.5, 0.5, 0.5)));
+    let checker = Arc::new(CheckerTexture::new_rgb(
+        Vec3::new(0.2, 0.3, 0.1),
+        Vec3::new(0.9, 0.9, 0.9),
+    ));
     world.add(Arc::new(Sphere::new(
         Vec3::new(0., -1000., 0.),
         1000.,
-        ground_material,
+        Arc::new(Lambertian::new_texture(checker)),
     )));
+
+    // let ground_material = Arc::new(Lambertian::new(Vec3::new(0.5, 0.5, 0.5)));
+    // world.add(Arc::new(Sphere::new(
+    //     Vec3::new(0., -1000., 0.),
+    //     1000.,
+    //     ground_material,
+    // )));
 
     for a in -11..11 {
         for b in -11..11 {
@@ -134,7 +151,7 @@ fn main() {
     const THREAD_NUMBER: usize = 16;
 
     const AUTHOR: &str = "Youwei Zhong";
-    const PATH: &str = "output/Bouncing_spheres_multithread.jpg";
+    const PATH: &str = "output/Spheres_on_checkered_ground.jpg";
 
     //---------------------------------------------------------------------------------
 
