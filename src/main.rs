@@ -10,6 +10,7 @@ mod camera;
 mod color;
 mod hit;
 mod material;
+mod scene;
 mod texture;
 pub use camera::Camera;
 pub use hit::*;
@@ -18,11 +19,10 @@ mod rt_weekend;
 pub use rt_weekend::*;
 mod sphere;
 use color::write_color;
-use sphere::*;
-use texture::CheckerTexture;
 mod ray;
 mod vec3;
 use crate::bvh::BVHNode;
+use crate::scene::*;
 pub use ray::Ray;
 use std::collections::VecDeque;
 use std::fmt::Display;
@@ -36,82 +36,6 @@ use console::style;
 use image::{ImageBuffer, RgbImage};
 #[allow(unused_imports)]
 use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
-
-fn random_scene() -> HitList {
-    let mut world = HitList::new();
-
-    let checker = Arc::new(CheckerTexture::new_rgb(
-        Vec3::new(0.2, 0.3, 0.1),
-        Vec3::new(0.9, 0.9, 0.9),
-    ));
-    world.add(Arc::new(Sphere::new(
-        Vec3::new(0., -1000., 0.),
-        1000.,
-        Arc::new(Lambertian::new_texture(checker)),
-    )));
-
-    // let ground_material = Arc::new(Lambertian::new(Vec3::new(0.5, 0.5, 0.5)));
-    // world.add(Arc::new(Sphere::new(
-    //     Vec3::new(0., -1000., 0.),
-    //     1000.,
-    //     ground_material,
-    // )));
-
-    for a in -11..11 {
-        for b in -11..11 {
-            // choose material
-            let choose_mat = random_double();
-            let center = Vec3::new(
-                a as f64 + 0.9 * random_double(),
-                0.2,
-                b as f64 + 0.9 * random_double(),
-            );
-            // 1.2^2 -0.8^2 < 0.9^2 to prevent being too close to the right sphere
-            if (center - Vec3::new(4., 0.2, 0.)).length() > 0.9 {
-                let sphere_material: Arc<dyn Material> = if choose_mat < 0.8 {
-                    // diffuse: 80%
-                    let albedo = Vec3::elemul(Vec3::random(), Vec3::random());
-                    Arc::new(Lambertian::new(albedo))
-                } else if choose_mat < 0.95 {
-                    // metal: 15%
-                    let albedo = Vec3::random_in_range(0.5, 1.);
-                    let fuzz = random_double_in_range(0., 0.5);
-                    Arc::new(Metal::new(albedo, fuzz))
-                } else {
-                    // glass: 5%
-                    Arc::new(Dielectric::new(1.5))
-                };
-                if choose_mat < 0.8 {
-                    let center2 = center + Vec3::new(0., random_double_in_range(0., 0.5), 0.);
-                    world.add(Arc::new(MovingSphere::new(
-                        center,
-                        center2,
-                        0.,
-                        1.,
-                        0.2,
-                        sphere_material,
-                    )));
-                } else {
-                    world.add(Arc::new(Sphere::new(center, 0.2, sphere_material)));
-                }
-            }
-        }
-    }
-    // centre
-    let material1 = Arc::new(Dielectric::new(1.5));
-    world.add(Arc::new(Sphere::new(Vec3::new(0., 1., 0.), 1., material1)));
-    // left
-    let material2 = Arc::new(Lambertian::new(Vec3::new(0.4, 0.2, 0.1)));
-    world.add(Arc::new(Sphere::new(Vec3::new(-4., 1., 0.), 1., material2)));
-    // right
-    let material3 = Arc::new(Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.));
-    world.add(Arc::new(Sphere::new(Vec3::new(4., 1., 0.), 1., material3)));
-
-    world
-}
-
-//---------------------------------------------------------------------------------
-
 /// ray_color() function decides the color of a ray.
 fn ray_color(r: Ray, world: &Arc<BVHNode>, depth: i32) -> Vec3 {
     if depth <= 0 {
@@ -151,7 +75,7 @@ fn main() {
     const THREAD_NUMBER: usize = 16;
 
     const AUTHOR: &str = "Youwei Zhong";
-    const PATH: &str = "output/Spheres_on_checkered_ground.jpg";
+    const PATH: &str = "output/Checkered_spheres.jpg";
 
     //---------------------------------------------------------------------------------
 
@@ -180,9 +104,31 @@ fn main() {
         IMAGE_HEIGHT.try_into().unwrap(),
     );
 
-    // World
+    // Scene
 
-    let hit_list = Arc::new(random_scene());
+    let hit_list: Arc<HitList>;
+    // let look_from = Vec3::new(3., 3., 2.);
+    let look_from: Vec3;
+    // let look_at = Vec3::new(0., 0., -1.);
+    let look_at: Vec3;
+    let vfov: f64;
+    // * `aperture` - aperture's radius of the camera
+    let mut aperture = 0.;
+    match 0 {
+        1 => {
+            hit_list = Arc::new(random_scene());
+            look_from = Vec3::new(13., 2., 3.);
+            look_at = Vec3::new(0., 0., 0.);
+            vfov = 20.0;
+            aperture = 0.1;
+        }
+        _ => {
+            hit_list = Arc::new(two_spheres());
+            look_from = Vec3::new(13., 2., 3.);
+            look_at = Vec3::new(0., 0., 0.);
+            vfov = 20.0;
+        }
+    }
     let world = Arc::new(BVHNode::new(
         &mut hit_list.list.clone(),
         0,
@@ -228,19 +174,15 @@ fn main() {
 
     // Camera
 
-    // let look_from = Vec3::new(3., 3., 2.);
-    let look_from = Vec3::new(13., 2., 3.);
-    // let look_at = Vec3::new(0., 0., -1.);
-    let look_at = Vec3::new(0., 0., 0.);
     let vup = Vec3::new(0., 1., 0.);
     // let dist_to_focus = (look_from - look_at).length();
     let dist_to_focus = 10.;
-    let aperture = 0.1;
+
     let camera = Arc::new(Camera::new(
         look_from,
         look_at,
         vup,
-        20.,
+        vfov,
         ASPECT_RATIO,
         aperture,
         dist_to_focus,

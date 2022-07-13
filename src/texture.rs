@@ -20,6 +20,10 @@ impl Texture for SolidColor {
         self.color_value
     }
 }
+/// We can create a checker texture by noting that
+/// the sign of sine and cosine just alternates in a regular way,
+/// and if we multiply trig functions in all three dimensions,
+/// the sign of that product forms a 3D checker pattern.
 pub struct CheckerTexture {
     odd: Arc<dyn Texture>,
     even: Arc<dyn Texture>,
