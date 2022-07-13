@@ -76,7 +76,7 @@ fn main() {
     const THREAD_NUMBER: usize = 16;
 
     const AUTHOR: &str = "Youwei Zhong";
-    const PATH: &str = "output/Perlin_texture_with_turbulence.jpg";
+    const PATH: &str = "output/Perlin_noise_marbled_texture.jpg";
 
     //---------------------------------------------------------------------------------
 

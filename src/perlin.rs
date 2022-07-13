@@ -59,6 +59,7 @@ impl Perlin {
         }
         Self::perlin_interp(c, u, v, w)
     }
+    /// Very often, a composite noise that has multiple summed frequencies is used. This is usually called turbulence, and is a sum of repeated calls to noise:
     pub fn turb(&self, p: &Vec3, depth: usize) -> f64 {
         let mut accum = 0.0;
         let mut temp_p = *p;
