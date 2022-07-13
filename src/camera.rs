@@ -4,16 +4,16 @@ use crate::vec3::Vec3;
 /// Camera decides the direction of the ray according to the pixel's position.
 #[allow(dead_code)]
 pub struct Camera {
-    origin: Vec3,
-    lower_left_corner: Vec3,
-    horizontal: Vec3,
-    vertical: Vec3,
-    u: Vec3,
-    v: Vec3,
-    w: Vec3,
-    lens_radius: f64,
-    time0: f64,
-    time1: f64,
+    pub origin: Vec3,
+    pub lower_left_corner: Vec3,
+    pub horizontal: Vec3,
+    pub vertical: Vec3,
+    pub u: Vec3,
+    pub v: Vec3,
+    pub w: Vec3,
+    pub lens_radius: f64,
+    pub time0: f64,
+    pub time1: f64,
 }
 impl Camera {
     /// The constructor of the Camera.
@@ -59,12 +59,10 @@ impl Camera {
     pub fn get_ray(&self, s: f64, t: f64) -> Ray {
         let rd = Vec3::random_in_unit_disk() * self.lens_radius;
         let offset = self.u * rd.x() + self.v * rd.y();
-        Ray {
-            orig: self.origin + offset,
-            dir: self.lower_left_corner + self.horizontal * s + self.vertical * t
-                - self.origin
-                - offset,
-            time: random_double_in_range(self.time0, self.time1),
-        }
+        Ray::new(
+            self.origin + offset,
+            self.lower_left_corner + self.horizontal * s + self.vertical * t - self.origin - offset,
+            random_double_in_range(self.time0, self.time1),
+        )
     }
 }

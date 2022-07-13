@@ -1,4 +1,6 @@
 extern crate rand;
+mod aabb;
+mod bvh;
 mod camera;
 mod color;
 mod hit;
@@ -13,6 +15,7 @@ use color::write_color;
 use sphere::*;
 mod ray;
 mod vec3;
+use crate::bvh::BVHNode;
 pub use ray::Ray;
 use std::collections::VecDeque;
 use std::fmt::Display;
@@ -93,13 +96,13 @@ fn random_scene() -> HitList {
 //---------------------------------------------------------------------------------
 
 /// ray_color() function decides the color of a ray.
-fn ray_color(r: Ray, world: &Arc<hit::HitList>, depth: i32) -> Vec3 {
+fn ray_color(r: Ray, world: &Arc<BVHNode>, depth: i32) -> Vec3 {
     if depth <= 0 {
         return Vec3::zero();
     }
     let mut hit_record = HitRecord::new(Arc::new(Lambertian::new(Vec3::zero())));
     // Fixing Shadow Acne by setting t_min 0.001.
-    if world.hit(r, 0.001, INFINITY, &mut hit_record) {
+    if world.hit(&r, 0.001, INFINITY, &mut hit_record) {
         let mut scattered = Ray::zero();
         let mut attenuation = Vec3::zero();
         if hit_record
@@ -162,7 +165,14 @@ fn main() {
 
     // World
 
-    let world = Arc::new(random_scene());
+    let hit_list = Arc::new(random_scene());
+    let world = Arc::new(BVHNode::new(
+        &mut hit_list.list.clone(),
+        0,
+        hit_list.list.len(),
+        0.,
+        1.,
+    ));
 
     // let r = (PI / 4.0).cos();
 
