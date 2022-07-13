@@ -76,7 +76,7 @@ fn main() {
     const THREAD_NUMBER: usize = 16;
 
     const AUTHOR: &str = "Youwei Zhong";
-    const PATH: &str = "output/Perlin_texture_with_trilinear_interpolation.jpg";
+    const PATH: &str = "output/Perlin_texture_trilinearly_interpolated_smoothed.jpg";
 
     //---------------------------------------------------------------------------------
 

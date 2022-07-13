@@ -1,5 +1,14 @@
 use crate::{rt_weekend::*, vec3::Vec3};
 static POINT_COUNT: usize = 256;
+/// A key part of Perlin noise is that it is repeatable:
+/// it takes a 3D point as input and always returns the same randomish number.
+/// Nearby points return similar numbers. Another important part of Perlin noise is that
+/// it be simple and fast, so it’s usually done as a hack.
+/// I’ll build that hack up incrementally based on Andrew Kensler’s description.
+///
+/// We could just tile all of space with a 3D array of random numbers and use them in blocks. You get something blocky where the repeating is clear:
+/// ![Image 6: Tiled random patterns](https://raytracing.github.io/images/img-2.06-tile-random.jpg)
+/// Let’s just use some sort of hashing to scramble this, instead of tiling. This has a bit of support code to make it all happen:
 pub struct Perlin {
     ran_float: Vec<f64>,
     perm_x: Vec<i32>,
@@ -19,6 +28,9 @@ impl Perlin {
             perm_z: Self::perlin_generate_perm(),
         }
     }
+    /// Smoothing yields an improved result, but there are obvious grid features in there.
+    /// Some of it is Mach bands, a known perceptual artifact of linear interpolation of color.
+    /// A standard trick is to use a Hermite cubic to round off the interpolation:
     pub fn noise(&self, p: &Vec3) -> f64 {
         // // 按位与取后 8 位
         // let i = ((p.x() * 4.) as i32 & 255) as usize;
@@ -26,9 +38,12 @@ impl Perlin {
         // let k = ((p.z() * 4.) as i32 & 255) as usize;
         // // 按位异或
         // self.ran_float[(self.perm_x[i] ^ self.perm_y[j] ^ self.perm_z[k]) as usize]
-        let u = p.x() - p.x().floor();
-        let v = p.y() - p.y().floor();
-        let w = p.z() - p.z().floor();
+        let mut u = p.x() - p.x().floor();
+        let mut v = p.y() - p.y().floor();
+        let mut w = p.z() - p.z().floor();
+        u = u * u * (3. - 2. * u);
+        v = v * v * (3. - 2. * v);
+        w = w * w * (3. - 2. * w);
         let i = p.x().floor() as i32;
         let j = p.y().floor() as i32;
         let k = p.z().floor() as i32;
