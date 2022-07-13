@@ -10,6 +10,7 @@ static POINT_COUNT: usize = 256;
 /// ![Image 6: Tiled random patterns](https://raytracing.github.io/images/img-2.06-tile-random.jpg)
 /// Let’s just use some sort of hashing to scramble this, instead of tiling. This has a bit of support code to make it all happen:
 pub struct Perlin {
+    /// Using Random Vectors on the Lattice Points
     ran_vec: Vec<Vec3>,
     perm_x: Vec<i32>,
     perm_y: Vec<i32>,
@@ -57,6 +58,19 @@ impl Perlin {
             }
         }
         Self::perlin_interp(c, u, v, w)
+    }
+    pub fn turb(&self, p: &Vec3, depth: usize) -> f64 {
+        let mut accum = 0.0;
+        let mut temp_p = *p;
+        let mut weight = 1.0;
+
+        for _i in 0..depth {
+            accum += weight * self.noise(&temp_p);
+            weight *= 0.5;
+            temp_p *= 2.;
+        }
+
+        accum.abs()
     }
     fn perlin_generate_perm() -> Vec<i32> {
         let mut p: Vec<i32> = vec![0; POINT_COUNT];
