@@ -1,4 +1,4 @@
-use crate::aarect::XYRectangle;
+use crate::aarect::*;
 pub use crate::hit::*;
 use crate::material::*;
 pub use crate::rt_weekend::*;
@@ -136,5 +136,46 @@ pub fn simple_light() -> HitList {
     )));
     let diff_light = Arc::new(DiffuseLight::new(Vec3::new(4., 4., 4.)));
     world.add(Arc::new(XYRectangle::new(3., 5., 1., 3., -2., diff_light)));
+    world
+}
+pub fn cornell_box() -> HitList {
+    let mut world = HitList::new();
+    let red = Arc::new(Lambertian::new(Vec3::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new(Vec3::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new(Vec3::new(0.12, 0.45, 0.15)));
+    let light = Arc::new(DiffuseLight::new(Vec3::new(15., 15., 15.)));
+
+    world.add(Arc::new(YZRectangle::new(0., 555., 0., 555., 555., green)));
+    world.add(Arc::new(YZRectangle::new(0., 555., 0., 555., 0., red)));
+    world.add(Arc::new(XZRectangle::new(
+        213., 343., 227., 332., 554., light,
+    )));
+    world.add(Arc::new(XZRectangle::new(
+        0.,
+        555.,
+        0.,
+        555.,
+        0.,
+        white.clone(),
+    )));
+    world.add(Arc::new(XZRectangle::new(
+        0.,
+        555.,
+        0.,
+        555.,
+        555.,
+        white.clone(),
+    )));
+    world.add(Arc::new(XYRectangle::new(0., 555., 0., 555., 555., white)));
+    // world.add(Arc::new(CornellBox::new(
+    //     Vec3::new(130., 0., 65.),
+    //     Vec3::new(295., 165., 230.),
+    //     white.clone(),
+    // )));
+    // world.add(Arc::new(CornellBox::new(
+    //     Vec3::new(265., 0., 295.),
+    //     Vec3::new(430., 330., 460.),
+    //     white,
+    // )));
     world
 }

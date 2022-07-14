@@ -9,6 +9,7 @@ mod aarect;
 mod bvh;
 mod camera;
 mod color;
+mod cornell_box;
 mod hit;
 mod material;
 mod perlin;
@@ -88,34 +89,20 @@ fn main() {
     const THREAD_NUMBER: usize = 16;
 
     const AUTHOR: &str = "Youwei Zhong";
-    const PATH: &str = "output/Scene_with_rectangle_light_source.jpg";
+    const PATH: &str = "output/Empty_Cornell_box.jpg";
 
     //---------------------------------------------------------------------------------
 
     // Image
 
-    const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    const IMAGE_WIDTH: usize = 400;
-    const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
+    let mut aspect_ratio: f64 = 16.0 / 9.0;
+    let mut image_width: usize = 400;
     let mut samples_per_pixel: usize = 100;
     /// Reflection max depth
     const MAX_DEPTH: i32 = 50;
     /// JPG_QUALITY
     /// From 0 to 100
     const QUALITY: u8 = 100;
-    println!(
-        "Image size: {}\nJPEG quality: {}\nSamples per pixel: {}\nReflection max depth: {}",
-        style(IMAGE_WIDTH.to_string() + &'x'.to_string() + &IMAGE_HEIGHT.to_string()).yellow(),
-        style(QUALITY.to_string()).yellow(),
-        style(samples_per_pixel.to_string()).yellow(),
-        style(MAX_DEPTH.to_string()).yellow()
-    );
-
-    // Create image data
-    let mut img: RgbImage = ImageBuffer::new(
-        IMAGE_WIDTH.try_into().unwrap(),
-        IMAGE_HEIGHT.try_into().unwrap(),
-    );
 
     // Scene
 
@@ -128,7 +115,7 @@ fn main() {
     // * `aperture` - aperture's radius of the camera
     let mut aperture = 0.;
     let background;
-    match 5 {
+    match 6 {
         1 => {
             hit_list = Arc::new(random_scene());
             background = Vec3::new(0.7, 0.8, 1.);
@@ -165,6 +152,16 @@ fn main() {
             look_from = Vec3::new(26., 3., 6.);
             look_at = Vec3::new(0., 2., 0.);
             vfov = 20.0;
+        }
+        6 => {
+            hit_list = Arc::new(cornell_box());
+            aspect_ratio = 1.0;
+            image_width = 600;
+            samples_per_pixel = 200;
+            background = Vec3::zero();
+            look_from = Vec3::new(278., 278., -800.);
+            look_at = Vec3::new(278., 278., 0.);
+            vfov = 40.0;
         }
         _ => {
             hit_list = Arc::new(HitList::new());
@@ -222,13 +219,26 @@ fn main() {
     let vup = Vec3::new(0., 1., 0.);
     // let dist_to_focus = (look_from - look_at).length();
     let dist_to_focus = 10.;
+    let image_height: usize = (image_width as f64 / aspect_ratio) as usize;
+    println!(
+        "Image size: {}\nJPEG quality: {}\nSamples per pixel: {}\nReflection max depth: {}",
+        style(image_width.to_string() + &'x'.to_string() + &image_height.to_string()).yellow(),
+        style(QUALITY.to_string()).yellow(),
+        style(samples_per_pixel.to_string()).yellow(),
+        style(MAX_DEPTH.to_string()).yellow()
+    );
 
+    // Create image data
+    let mut img: RgbImage = ImageBuffer::new(
+        image_width.try_into().unwrap(),
+        image_height.try_into().unwrap(),
+    );
     let camera = Arc::new(Camera::new(
         look_from,
         look_at,
         vup,
         vfov,
-        ASPECT_RATIO,
+        aspect_ratio,
         aperture,
         dist_to_focus,
         0.,
@@ -259,7 +269,7 @@ fn main() {
         style("Threads...").green(),
     );
 
-    const SECTION_LINE_NUM: usize = IMAGE_HEIGHT as usize / THREAD_NUMBER;
+    let section_line_num: usize = image_height as usize / THREAD_NUMBER;
 
     let mut output_pixel_color = Vec::<Vec3>::new();
     let mut thread_pool = VecDeque::<_>::new();
@@ -268,13 +278,13 @@ fn main() {
     // multiprogress.set_move_cursor(true); // turn on this to reduce flickering
 
     for thread_id in 0..THREAD_NUMBER {
-        let line_beg = SECTION_LINE_NUM * thread_id;
-        let line_end = if line_beg + SECTION_LINE_NUM > IMAGE_HEIGHT
-            || (thread_id == THREAD_NUMBER - 1 && line_beg + SECTION_LINE_NUM < IMAGE_HEIGHT)
+        let line_beg = section_line_num * thread_id;
+        let line_end = if line_beg + section_line_num > image_height
+            || (thread_id == THREAD_NUMBER - 1 && line_beg + section_line_num < image_height)
         {
-            IMAGE_HEIGHT
+            image_height
         } else {
-            line_beg + SECTION_LINE_NUM
+            line_beg + section_line_num
         };
         // let mp = multiprogress.clone();
         // // Progress bar UI powered by library `indicatif`
@@ -301,12 +311,12 @@ fn main() {
                 let mut section_pixel_color = Vec::<Vec3>::new();
 
                 for j in line_beg..line_end {
-                    for i in 0..IMAGE_WIDTH {
+                    for i in 0..image_width {
                         let mut pixel_color = Vec3::zero();
                         // take samples_per_pixel samples and average them
                         for _s in 0..samples_per_pixel {
-                            let u = (i as f64 + random_double()) / (IMAGE_WIDTH as f64);
-                            let v = (j as f64 + random_double()) / (IMAGE_HEIGHT as f64);
+                            let u = (i as f64 + random_double()) / (image_width as f64);
+                            let v = (j as f64 + random_double()) / (image_height as f64);
                             let r = camera_clone.get_ray(u, v);
                             pixel_color += ray_color(r, &background, &world_clone, MAX_DEPTH);
                         }
@@ -368,15 +378,15 @@ fn main() {
     );
 
     let mut pixel_id = 0;
-    for j in 0..IMAGE_HEIGHT {
-        for i in 0..IMAGE_WIDTH {
+    for j in 0..image_height {
+        for i in 0..image_width {
             write_color(
                 // + halo[y as usize][x as usize];
                 output_pixel_color[pixel_id],
                 samples_per_pixel,
                 &mut img,
                 i,
-                IMAGE_HEIGHT - j - 1,
+                image_height - j - 1,
             );
             pixel_id += 1;
         }
