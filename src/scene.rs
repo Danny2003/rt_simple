@@ -1,3 +1,4 @@
+use crate::aarect::XYRectangle;
 pub use crate::hit::*;
 use crate::material::*;
 pub use crate::rt_weekend::*;
@@ -110,5 +111,30 @@ pub fn two_perlin_spheres() -> HitList {
         2.,
         Arc::new(Lambertian::new_texture(pertext)),
     )));
+    world
+}
+pub fn earth() -> HitList {
+    let earth_texture = Arc::new(ImageTexture::new("input/earthmap.jpg"));
+    let earth_surface = Arc::new(Lambertian::new_texture(earth_texture));
+    let globe = Arc::new(Sphere::new(Vec3::new(0., 0., 0.), 2., earth_surface));
+    let mut world = HitList::new();
+    world.add(globe);
+    world
+}
+pub fn simple_light() -> HitList {
+    let mut world = HitList::new();
+    let pertext = Arc::new(NoiseTexture::new(4.));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0., -1000., 0.),
+        1000.,
+        Arc::new(Lambertian::new_texture(pertext.clone())),
+    )));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0., 2., 0.),
+        2.,
+        Arc::new(Lambertian::new_texture(pertext)),
+    )));
+    let diff_light = Arc::new(DiffuseLight::new(Vec3::new(4., 4., 4.)));
+    world.add(Arc::new(XYRectangle::new(3., 5., 1., 3., -2., diff_light)));
     world
 }

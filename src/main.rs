@@ -4,7 +4,8 @@
 /// He is the author of the [PPCA-Raytracer-2022](https://github.com/ACMClassCourse-2021/PPCA-Raytracer-2022) project.
 ///
 extern crate rand;
-mod aabb;
+pub mod aabb;
+mod aarect;
 mod bvh;
 mod camera;
 mod color;
@@ -38,26 +39,37 @@ use image::{ImageBuffer, RgbImage};
 #[allow(unused_imports)]
 use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
 /// ray_color() function decides the color of a ray.
-fn ray_color(r: Ray, world: &Arc<BVHNode>, depth: i32) -> Vec3 {
+fn ray_color(r: Ray, background: &Vec3, world: &Arc<BVHNode>, depth: i32) -> Vec3 {
     if depth <= 0 {
         return Vec3::zero();
     }
     let mut hit_record = HitRecord::new(Arc::new(Lambertian::new(Vec3::zero())));
     // Fixing Shadow Acne by setting t_min 0.001.
-    if world.hit(&r, 0.001, INFINITY, &mut hit_record) {
-        let mut scattered = Ray::zero();
-        let mut attenuation = Vec3::zero();
-        if hit_record
-            .material
-            .scatter(&r, &hit_record, &mut attenuation, &mut scattered)
-        {
-            return Vec3::elemul(attenuation, ray_color(scattered, world, depth - 1));
-        }
-        return Vec3::zero();
+    // If the ray hits nothing, return the background color.
+    if !world.hit(&r, 0.001, INFINITY, &mut hit_record) {
+        return *background;
     }
-    let unit_direction = Vec3::unit(r.direction());
-    let t = 0.5 * (unit_direction.y() + 1.0);
-    Vec3::ones() * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
+    let mut scattered = Ray::zero();
+    let mut attenuation = Vec3::zero();
+    let emitted = hit_record
+        .material
+        .emitted(hit_record.u, hit_record.v, &hit_record.p);
+    if !hit_record
+        .material
+        .scatter(&r, &hit_record, &mut attenuation, &mut scattered)
+    {
+        return emitted;
+    }
+    emitted
+        + Vec3::elemul(
+            attenuation,
+            ray_color(scattered, background, world, depth - 1),
+        )
+    // return Vec3::zero();
+
+    // let unit_direction = Vec3::unit(r.direction());
+    // let t = 0.5 * (unit_direction.y() + 1.0);
+    // Vec3::ones() * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
 }
 
 //---------------------------------------------------------------------------------
@@ -76,7 +88,7 @@ fn main() {
     const THREAD_NUMBER: usize = 16;
 
     const AUTHOR: &str = "Youwei Zhong";
-    const PATH: &str = "output/Perlin_noise_marbled_texture.jpg";
+    const PATH: &str = "output/Scene_with_rectangle_light_source.jpg";
 
     //---------------------------------------------------------------------------------
 
@@ -85,7 +97,7 @@ fn main() {
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    const SAMPLES_PER_PIXEL: usize = 100;
+    let mut samples_per_pixel: usize = 100;
     /// Reflection max depth
     const MAX_DEPTH: i32 = 50;
     /// JPG_QUALITY
@@ -95,7 +107,7 @@ fn main() {
         "Image size: {}\nJPEG quality: {}\nSamples per pixel: {}\nReflection max depth: {}",
         style(IMAGE_WIDTH.to_string() + &'x'.to_string() + &IMAGE_HEIGHT.to_string()).yellow(),
         style(QUALITY.to_string()).yellow(),
-        style(SAMPLES_PER_PIXEL.to_string()).yellow(),
+        style(samples_per_pixel.to_string()).yellow(),
         style(MAX_DEPTH.to_string()).yellow()
     );
 
@@ -115,9 +127,11 @@ fn main() {
     let vfov: f64;
     // * `aperture` - aperture's radius of the camera
     let mut aperture = 0.;
-    match 0 {
+    let background;
+    match 5 {
         1 => {
             hit_list = Arc::new(random_scene());
+            background = Vec3::new(0.7, 0.8, 1.);
             look_from = Vec3::new(13., 2., 3.);
             look_at = Vec3::new(0., 0., 0.);
             vfov = 20.0;
@@ -125,15 +139,39 @@ fn main() {
         }
         2 => {
             hit_list = Arc::new(two_spheres());
+            background = Vec3::new(0.7, 0.8, 1.);
             look_from = Vec3::new(13., 2., 3.);
             look_at = Vec3::new(0., 0., 0.);
             vfov = 20.0;
         }
-        _ => {
+        3 => {
             hit_list = Arc::new(two_perlin_spheres());
+            background = Vec3::new(0.7, 0.8, 1.);
             look_from = Vec3::new(13., 2., 3.);
             look_at = Vec3::new(0., 0., 0.);
             vfov = 20.0;
+        }
+        4 => {
+            hit_list = Arc::new(earth());
+            background = Vec3::new(0.7, 0.8, 1.);
+            look_from = Vec3::new(13., 2., 3.);
+            look_at = Vec3::new(0., 0., 0.);
+            vfov = 20.0;
+        }
+        5 => {
+            hit_list = Arc::new(simple_light());
+            samples_per_pixel = 400;
+            background = Vec3::zero();
+            look_from = Vec3::new(26., 3., 6.);
+            look_at = Vec3::new(0., 2., 0.);
+            vfov = 20.0;
+        }
+        _ => {
+            hit_list = Arc::new(HitList::new());
+            background = Vec3::zero();
+            look_from = Vec3::zero();
+            look_at = Vec3::zero();
+            vfov = 40.0;
         }
     }
     let world = Arc::new(BVHNode::new(
@@ -266,11 +304,11 @@ fn main() {
                     for i in 0..IMAGE_WIDTH {
                         let mut pixel_color = Vec3::zero();
                         // take samples_per_pixel samples and average them
-                        for _s in 0..SAMPLES_PER_PIXEL {
+                        for _s in 0..samples_per_pixel {
                             let u = (i as f64 + random_double()) / (IMAGE_WIDTH as f64);
                             let v = (j as f64 + random_double()) / (IMAGE_HEIGHT as f64);
                             let r = camera_clone.get_ray(u, v);
-                            pixel_color += ray_color(r, &world_clone, MAX_DEPTH);
+                            pixel_color += ray_color(r, &background, &world_clone, MAX_DEPTH);
                         }
                         section_pixel_color.push(pixel_color);
                     }
@@ -335,7 +373,7 @@ fn main() {
             write_color(
                 // + halo[y as usize][x as usize];
                 output_pixel_color[pixel_id],
-                SAMPLES_PER_PIXEL,
+                samples_per_pixel,
                 &mut img,
                 i,
                 IMAGE_HEIGHT - j - 1,

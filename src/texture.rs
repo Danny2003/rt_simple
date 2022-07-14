@@ -1,5 +1,7 @@
+use crate::color::clamp;
 use crate::perlin::*;
 use crate::vec3::Vec3;
+use image::*;
 use std::sync::Arc;
 pub trait Texture: Sync + Send {
     fn value(&self, u: f64, v: f64, p: &Vec3) -> Vec3;
@@ -70,5 +72,54 @@ impl Texture for NoiseTexture {
         // let n = self.noise.turb(&(*p * self.scale), 7);
         // let n = 0.5 * (1.0 + self.noise.noise(&(*p * self.scale)));
         Vec3::new(n, n, n)
+    }
+}
+pub struct ImageTexture {
+    data: ImageBuffer<Rgb<u8>, Vec<u8>>,
+    width: usize,
+    height: usize,
+}
+impl Default for ImageTexture {
+    fn default() -> Self {
+        Self {
+            data: ImageBuffer::new(0, 0),
+            width: 0,
+            height: 0,
+        }
+    }
+}
+impl ImageTexture {
+    #[allow(dead_code)]
+    pub fn new(filename: &str) -> Self {
+        let data = open(filename).unwrap().into_rgb8();
+        let width = data.width() as usize;
+        let height = data.height() as usize;
+        Self {
+            data,
+            width,
+            height,
+        }
+    }
+}
+impl Texture for ImageTexture {
+    fn value(&self, mut u: f64, mut v: f64, _p: &Vec3) -> Vec3 {
+        // Clamp input texture coordinates to [0,1] x [1,0]
+        u = clamp(u, 0., 1.);
+        v = 1.0 - clamp(v, 0., 1.); // Flip V to image coordinates
+        let i = (u * self.width as f64).floor() as usize;
+        let j = (v * self.height as f64).floor() as usize;
+        if i < self.width && j < self.height {
+            let pixel = self
+                .data
+                .get_pixel(i.try_into().unwrap(), j.try_into().unwrap())
+                .to_rgb();
+            Vec3::new(
+                pixel[0] as f64 / 255.,
+                pixel[1] as f64 / 255.,
+                pixel[2] as f64 / 255.,
+            )
+        } else {
+            Vec3::new(1., 1., 1.)
+        }
     }
 }

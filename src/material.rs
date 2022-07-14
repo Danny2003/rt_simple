@@ -20,6 +20,10 @@ pub trait Material: Sync + Send {
         attenuation: &mut Vec3,
         scattered: &mut Ray,
     ) -> bool;
+    #[allow(unused_variables)]
+    fn emitted(&self, u: f64, v: f64, p: &Vec3) -> Vec3 {
+        Vec3::zero()
+    }
 }
 /// We can make textured materials by replacing the `Vec3` a with a texture pointer:
 pub struct Lambertian {
@@ -146,5 +150,34 @@ impl Material for Dielectric {
             };
         *scattered = Ray::new(rec.p, direction, r_in.time());
         true
+    }
+}
+
+pub struct DiffuseLight {
+    emit: Arc<dyn Texture>,
+}
+impl DiffuseLight {
+    pub fn new(emit: Vec3) -> Self {
+        Self {
+            emit: Arc::new(SolidColor::new(emit)),
+        }
+    }
+    #[allow(dead_code)]
+    pub fn new_texture(emit: Arc<dyn Texture>) -> Self {
+        Self { emit }
+    }
+}
+impl Material for DiffuseLight {
+    fn scatter(
+        &self,
+        _r_in: &Ray,
+        _rec: &HitRecord,
+        _attenuation: &mut Vec3,
+        _scattered: &mut Ray,
+    ) -> bool {
+        false
+    }
+    fn emitted(&self, u: f64, v: f64, p: &Vec3) -> Vec3 {
+        self.emit.value(u, v, p)
     }
 }
