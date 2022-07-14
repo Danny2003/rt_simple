@@ -1,4 +1,5 @@
 use crate::aarect::*;
+use crate::cornell_box::CornellBox;
 pub use crate::hit::*;
 use crate::material::*;
 pub use crate::rt_weekend::*;
@@ -166,16 +167,23 @@ pub fn cornell_box() -> HitList {
         555.,
         white.clone(),
     )));
-    world.add(Arc::new(XYRectangle::new(0., 555., 0., 555., 555., white)));
-    // world.add(Arc::new(CornellBox::new(
-    //     Vec3::new(130., 0., 65.),
-    //     Vec3::new(295., 165., 230.),
-    //     white.clone(),
-    // )));
-    // world.add(Arc::new(CornellBox::new(
-    //     Vec3::new(265., 0., 295.),
-    //     Vec3::new(430., 330., 460.),
-    //     white,
-    // )));
+    world.add(Arc::new(XYRectangle::new(
+        0.,
+        555.,
+        0.,
+        555.,
+        555.,
+        white.clone(),
+    )));
+    world.add(Arc::new(CornellBox::new(
+        Vec3::new(130., 0., 65.),
+        Vec3::new(295., 165., 230.),
+        white.clone(),
+    )));
+    world.add(Arc::new(CornellBox::new(
+        Vec3::new(265., 0., 295.),
+        Vec3::new(430., 330., 460.),
+        white,
+    )));
     world
 }
