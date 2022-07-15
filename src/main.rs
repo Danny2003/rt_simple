@@ -89,7 +89,7 @@ fn main() {
     const THREAD_NUMBER: usize = 16;
 
     const AUTHOR: &str = "Youwei Zhong";
-    const PATH: &str = "output/Cornell_box_with_two_blocks.jpg";
+    const PATH: &str = "output/Standard_Cornell_box_scenes.jpg";
 
     //---------------------------------------------------------------------------------
 

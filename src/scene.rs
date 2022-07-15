@@ -175,15 +175,27 @@ pub fn cornell_box() -> HitList {
         555.,
         white.clone(),
     )));
-    world.add(Arc::new(CornellBox::new(
-        Vec3::new(130., 0., 65.),
-        Vec3::new(295., 165., 230.),
-        white.clone(),
-    )));
-    world.add(Arc::new(CornellBox::new(
+    world.add(Arc::new(Translate::new(
+        Arc::new(RotateY::new(
+            Arc::new(CornellBox::new(
+                Vec3::new(0., 0., 0.),
+                Vec3::new(165., 330., 165.),
+                white.clone(),
+            )),
+            15.,
+        )),
         Vec3::new(265., 0., 295.),
-        Vec3::new(430., 330., 460.),
-        white,
+    )));
+    world.add(Arc::new(Translate::new(
+        Arc::new(RotateY::new(
+            Arc::new(CornellBox::new(
+                Vec3::new(0., 0., 0.),
+                Vec3::new(165., 165., 165.),
+                white,
+            )),
+            -18.,
+        )),
+        Vec3::new(130., 0., 65.),
     )));
     world
 }

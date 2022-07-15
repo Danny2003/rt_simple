@@ -104,7 +104,7 @@ pub fn box_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>, axis: i32) -> O
     if !a.bounding_box(0., 0., &mut box_a) || !b.bounding_box(0., 0., &mut box_b) {
         println!("No bounding box in BVHNode constructor.\n");
     }
-    box_a.min().get(axis).total_cmp(&box_b.min().get(axis))
+    box_a.min().get(axis).total_cmp(box_b.min().get(axis))
 }
 pub fn box_x_compare(a: &Arc<dyn Hittable>, b: &Arc<dyn Hittable>) -> Ordering {
     box_compare(a, b, 0)

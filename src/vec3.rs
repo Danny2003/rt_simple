@@ -16,11 +16,11 @@ impl Vec3 {
     pub fn z(&self) -> f64 {
         self.z
     }
-    pub fn get(&self, index: i32) -> f64 {
+    pub fn get(&mut self, index: i32) -> &mut f64 {
         match index {
-            0 => self.x,
-            1 => self.y,
-            2 => self.z,
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
             _ => panic!("Index out of bound!"),
         }
     }
