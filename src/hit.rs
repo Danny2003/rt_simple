@@ -1,5 +1,5 @@
 use crate::aabb::*;
-use crate::material::Material;
+use crate::material::*;
 use crate::ray::Ray;
 use crate::rt_weekend::*;
 use crate::vec3::Vec3;
@@ -27,13 +27,26 @@ pub struct HitRecord {
     /// whether the hit happens on the front face of the hitting surface
     pub front_face: bool,
 }
+impl Default for HitRecord {
+    fn default() -> Self {
+        Self {
+            p: Vec3::zero(),
+            normal: Vec3::zero(),
+            material: Arc::new(Lambertian::new(Vec3::zero())),
+            t: 0.,
+            u: 0.,
+            v: 0.,
+            front_face: true,
+        }
+    }
+}
 impl HitRecord {
     /// impl a default constructor for HitRecord
     pub fn new(material: Arc<dyn Material>) -> Self {
         Self {
             p: Vec3::zero(),
             normal: Vec3::zero(),
-            t: 0.0,
+            t: 0.,
             front_face: true,
             material,
             u: 0.,

@@ -1,4 +1,6 @@
 use crate::aarect::*;
+// use crate::bvh::BVHNode;
+use crate::constant_medium::ConstantMedium;
 use crate::cornell_box::CornellBox;
 pub use crate::hit::*;
 use crate::material::*;
@@ -199,3 +201,96 @@ pub fn cornell_box() -> HitList {
     )));
     world
 }
+/// We replace the two blocks with smoke and fog (dark and light particles),
+/// and make the light bigger (and dimmer so it doesn’t blow out the scene) for faster convergence
+pub fn cornell_smoke() -> HitList {
+    let mut world = HitList::new();
+    let red = Arc::new(Lambertian::new(Vec3::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new(Vec3::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new(Vec3::new(0.12, 0.45, 0.15)));
+    let light = Arc::new(DiffuseLight::new(Vec3::new(7., 7., 7.)));
+    world.add(Arc::new(YZRectangle::new(0., 555., 0., 555., 555., green)));
+    world.add(Arc::new(YZRectangle::new(0., 555., 0., 555., 0., red)));
+    world.add(Arc::new(XZRectangle::new(
+        113., 443., 127., 432., 554., light,
+    )));
+    world.add(Arc::new(XZRectangle::new(
+        0.,
+        555.,
+        0.,
+        555.,
+        0.,
+        white.clone(),
+    )));
+    world.add(Arc::new(XZRectangle::new(
+        0.,
+        555.,
+        0.,
+        555.,
+        555.,
+        white.clone(),
+    )));
+    world.add(Arc::new(XYRectangle::new(
+        0.,
+        555.,
+        0.,
+        555.,
+        555.,
+        white.clone(),
+    )));
+    world.add(Arc::new(ConstantMedium::new(
+        Arc::new(Translate::new(
+            Arc::new(RotateY::new(
+                Arc::new(CornellBox::new(
+                    Vec3::new(0., 0., 0.),
+                    Vec3::new(165., 330., 165.),
+                    white.clone(),
+                )),
+                15.,
+            )),
+            Vec3::new(265., 0., 295.),
+        )),
+        0.01,
+        Vec3::zero(),
+    )));
+    world.add(Arc::new(ConstantMedium::new(
+        Arc::new(Translate::new(
+            Arc::new(RotateY::new(
+                Arc::new(CornellBox::new(
+                    Vec3::new(0., 0., 0.),
+                    Vec3::new(165., 165., 165.),
+                    white,
+                )),
+                -18.,
+            )),
+            Vec3::new(130., 0., 65.),
+        )),
+        0.01,
+        Vec3::ones(),
+    )));
+    world
+}
+// pub fn final_scene() {
+//     let mut boxes1 = HitList::new();
+//     let ground = Arc::new(Lambertian::new(Vec3::new(0.48, 0.83, 0.53)));
+
+//     let boxes_per_side = 20;
+//     for i in 0..boxes_per_side {
+//         for j in 0..boxes_per_side {
+//             let w = 100.0;
+//             let x0 = -1000.0 + w * i as f64;
+//             let z0 = -1000.0 + w * j as f64;
+//             let y0 = 0.0;
+//             let x1 = x0 + w;
+//             let y1 = random_double_in_range(1., 101.);
+//             let z1 = z0 + w;
+
+//             boxes1.add(Arc::new(CornellBox::new(Vec3::new(x0,y0,z0), Vec3::new(x1,y1,z1), ground.clone())));
+//         }
+//     }
+
+//     let mut world = HitList::new();
+//     world.add(BVHNode::new(boxes1));
+//     let light = Arc::new(DiffuseLight::new(Vec3::new(7., 7., 7.)));
+
+// }

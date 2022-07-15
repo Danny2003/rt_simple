@@ -1,14 +1,15 @@
-///
-/// The progress bar, information on the terminal, and the multithread part is borrowed from the following person:
-/// [@PaperL](https://github.com/PaperL/), an ACM Class TA
-/// He is the author of the [PPCA-Raytracer-2022](https://github.com/ACMClassCourse-2021/PPCA-Raytracer-2022) project.
-///
+//!
+//! The progress bar, information on the terminal, and the multithread part is borrowed from the following person:
+//! [@PaperL](https://github.com/PaperL/), an ACM Class TA
+//! He is the author of the [PPCA-Raytracer-2022](https://github.com/ACMClassCourse-2021/PPCA-Raytracer-2022) project.
+//!
 extern crate rand;
 pub mod aabb;
 mod aarect;
 mod bvh;
 mod camera;
 mod color;
+mod constant_medium;
 mod cornell_box;
 mod hit;
 mod material;
@@ -17,7 +18,6 @@ mod scene;
 mod texture;
 pub use camera::Camera;
 pub use hit::*;
-use material::*;
 mod rt_weekend;
 pub use rt_weekend::*;
 mod sphere;
@@ -44,8 +44,7 @@ fn ray_color(r: Ray, background: &Vec3, world: &Arc<BVHNode>, depth: i32) -> Vec
     if depth <= 0 {
         return Vec3::zero();
     }
-    let mut hit_record = HitRecord::new(Arc::new(Lambertian::new(Vec3::zero())));
-    // Fixing Shadow Acne by setting t_min 0.001.
+    let mut hit_record = Default::default();
     // If the ray hits nothing, return the background color.
     if !world.hit(&r, 0.001, INFINITY, &mut hit_record) {
         return *background;
@@ -89,7 +88,7 @@ fn main() {
     const THREAD_NUMBER: usize = 16;
 
     const AUTHOR: &str = "Youwei Zhong";
-    const PATH: &str = "output/Standard_Cornell_box_scenes.jpg";
+    const PATH: &str = "output/Cornell_box_with_blocks_of_smoke.jpg";
 
     //---------------------------------------------------------------------------------
 
@@ -115,7 +114,7 @@ fn main() {
     // * `aperture` - aperture's radius of the camera
     let mut aperture = 0.;
     let background;
-    match 6 {
+    match 7 {
         1 => {
             hit_list = Arc::new(random_scene());
             background = Vec3::new(0.7, 0.8, 1.);
@@ -155,6 +154,16 @@ fn main() {
         }
         6 => {
             hit_list = Arc::new(cornell_box());
+            aspect_ratio = 1.0;
+            image_width = 600;
+            samples_per_pixel = 200;
+            background = Vec3::zero();
+            look_from = Vec3::new(278., 278., -800.);
+            look_at = Vec3::new(278., 278., 0.);
+            vfov = 40.0;
+        }
+        7 => {
+            hit_list = Arc::new(cornell_smoke());
             aspect_ratio = 1.0;
             image_width = 600;
             samples_per_pixel = 200;

@@ -181,3 +181,30 @@ impl Material for DiffuseLight {
         self.emit.value(u, v, p)
     }
 }
+pub struct Isotropic {
+    albedo: Arc<dyn Texture>,
+}
+impl Isotropic {
+    pub fn new(color: Vec3) -> Self {
+        Self {
+            albedo: Arc::new(SolidColor::new(color)),
+        }
+    }
+    #[allow(dead_code)]
+    pub fn new_texture(texture: Arc<dyn Texture>) -> Self {
+        Self { albedo: texture }
+    }
+}
+impl Material for Isotropic {
+    fn scatter(
+        &self,
+        r_in: &Ray,
+        rec: &HitRecord,
+        attenuation: &mut Vec3,
+        scattered: &mut Ray,
+    ) -> bool {
+        *scattered = Ray::new(rec.p, Vec3::random_in_unit_sphere(), r_in.time());
+        *attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
+        true
+    }
+}
