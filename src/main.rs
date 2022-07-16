@@ -96,7 +96,7 @@ fn main() {
 
     let mut aspect_ratio: f64 = 16.0 / 9.0;
     let mut image_width: usize = 400;
-    let mut samples_per_pixel: usize = 10000;
+    let mut samples_per_pixel: usize = 100;
     /// Reflection max depth
     const MAX_DEPTH: i32 = 50;
     /// JPG_QUALITY
@@ -176,7 +176,7 @@ fn main() {
             hit_list = Arc::new(final_scene());
             aspect_ratio = 1.0;
             image_width = 800;
-            samples_per_pixel = 100;
+            samples_per_pixel = 10000;
             background = Vec3::zero();
             look_from = Vec3::new(478., 278., -600.);
             look_at = Vec3::new(278., 278., 0.);
