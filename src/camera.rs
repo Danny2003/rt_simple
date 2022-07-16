@@ -2,7 +2,6 @@ use crate::ray::Ray;
 use crate::rt_weekend::*;
 use crate::vec3::Vec3;
 /// Camera decides the direction of the ray according to the pixel's position.
-#[allow(dead_code)]
 pub struct Camera {
     pub origin: Vec3,
     pub lower_left_corner: Vec3,

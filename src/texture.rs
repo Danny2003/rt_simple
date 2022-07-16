@@ -89,7 +89,6 @@ impl Default for ImageTexture {
     }
 }
 impl ImageTexture {
-    #[allow(dead_code)]
     pub fn new(filename: &str) -> Self {
         let data = open(filename).unwrap().into_rgb8();
         let width = data.width() as usize;
@@ -106,20 +105,20 @@ impl Texture for ImageTexture {
         // Clamp input texture coordinates to [0,1] x [1,0]
         u = clamp(u, 0., 1.);
         v = 1.0 - clamp(v, 0., 1.); // Flip V to image coordinates
-        let i = (u * self.width as f64).floor() as usize;
-        let j = (v * self.height as f64).floor() as usize;
-        if i < self.width && j < self.height {
-            let pixel = self
-                .data
-                .get_pixel(i.try_into().unwrap(), j.try_into().unwrap())
-                .to_rgb();
-            Vec3::new(
-                pixel[0] as f64 / 255.,
-                pixel[1] as f64 / 255.,
-                pixel[2] as f64 / 255.,
-            )
-        } else {
-            Vec3::new(1., 1., 1.)
+        let mut i = (u * self.width as f64).floor() as usize;
+        let mut j = (v * self.height as f64).floor() as usize;
+        // Clamp integer mapping, since actual coordinates should be less than 1.0
+        if i >= self.width {
+            i = self.width - 1;
         }
+        if j >= self.height {
+            j = self.height - 1;
+        }
+        let pixel = self.data.get_pixel(i as u32, j as u32).to_rgb();
+        Vec3::new(
+            pixel[0] as f64 / 255.,
+            pixel[1] as f64 / 255.,
+            pixel[2] as f64 / 255.,
+        )
     }
 }

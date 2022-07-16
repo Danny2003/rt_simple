@@ -69,7 +69,7 @@ impl Hittable for Sphere {
 ///
 pub fn get_sphere_uv(p: Vec3, u: &mut f64, v: &mut f64) {
     let theta = (-p.y()).acos();
-    let phi = (-p.z() / p.x()).atan() + PI;
+    let phi = (-p.z()).atan2(p.x()) + PI;
 
     *u = phi / (2. * PI);
     *v = theta / PI;

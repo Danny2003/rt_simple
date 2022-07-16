@@ -4,14 +4,6 @@ use crate::rt_weekend::*;
 use crate::texture::*;
 use crate::vec3::Vec3;
 use std::sync::Arc;
-/// utility function to compare f64 values
-pub fn fmin(a: f64, b: f64) -> f64 {
-    if a > b {
-        b
-    } else {
-        a
-    }
-}
 pub trait Material: Sync + Send {
     fn scatter(
         &self,
@@ -137,7 +129,7 @@ impl Material for Dielectric {
             self.ref_idx
         };
         let unit_direction = Vec3::unit(r_in.direction());
-        let cos_theta = fmin(-unit_direction * rec.normal, 1.0);
+        let cos_theta = (-unit_direction * rec.normal).min(1.0);
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
         // If "cannot_refract", all the light is reflected,
         // and because in practice that is usually inside solid objects, it is called “total internal reflection”.

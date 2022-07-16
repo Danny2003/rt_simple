@@ -182,7 +182,7 @@ impl RotateY {
 
                     for c in 0..3 {
                         *min.get(c) = min.get(c).min(*tester.get(c));
-                        *max.get(c) = max.get(c).min(*tester.get(c));
+                        *max.get(c) = max.get(c).max(*tester.get(c));
                     }
                 }
             }

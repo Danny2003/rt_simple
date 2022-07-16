@@ -1,5 +1,5 @@
 use crate::aarect::*;
-// use crate::bvh::BVHNode;
+use crate::bvh::BVHNode;
 use crate::constant_medium::ConstantMedium;
 use crate::cornell_box::CornellBox;
 pub use crate::hit::*;
@@ -270,27 +270,108 @@ pub fn cornell_smoke() -> HitList {
     )));
     world
 }
-// pub fn final_scene() {
-//     let mut boxes1 = HitList::new();
-//     let ground = Arc::new(Lambertian::new(Vec3::new(0.48, 0.83, 0.53)));
+pub fn final_scene() -> HitList {
+    let mut boxes1 = HitList::new();
+    let ground = Arc::new(Lambertian::new(Vec3::new(0.48, 0.83, 0.53)));
 
-//     let boxes_per_side = 20;
-//     for i in 0..boxes_per_side {
-//         for j in 0..boxes_per_side {
-//             let w = 100.0;
-//             let x0 = -1000.0 + w * i as f64;
-//             let z0 = -1000.0 + w * j as f64;
-//             let y0 = 0.0;
-//             let x1 = x0 + w;
-//             let y1 = random_double_in_range(1., 101.);
-//             let z1 = z0 + w;
+    let boxes_per_side = 20;
+    for i in 0..boxes_per_side {
+        for j in 0..boxes_per_side {
+            let w = 100.0;
+            let x0 = -1000.0 + w * i as f64;
+            let z0 = -1000.0 + w * j as f64;
+            let y0 = 0.0;
+            let x1 = x0 + w;
+            let y1 = random_double_in_range(1., 101.);
+            let z1 = z0 + w;
 
-//             boxes1.add(Arc::new(CornellBox::new(Vec3::new(x0,y0,z0), Vec3::new(x1,y1,z1), ground.clone())));
-//         }
-//     }
+            boxes1.add(Arc::new(CornellBox::new(
+                Vec3::new(x0, y0, z0),
+                Vec3::new(x1, y1, z1),
+                ground.clone(),
+            )));
+        }
+    }
 
-//     let mut world = HitList::new();
-//     world.add(BVHNode::new(boxes1));
-//     let light = Arc::new(DiffuseLight::new(Vec3::new(7., 7., 7.)));
+    let mut world = HitList::new();
+    world.add(Arc::new(BVHNode::new(boxes1.list, 0., 1.)));
+    let light = Arc::new(DiffuseLight::new(Vec3::new(7., 7., 7.)));
+    world.add(Arc::new(XZRectangle::new(
+        123., 423., 147., 412., 554., light,
+    )));
+    let center1 = Vec3::new(400., 400., 200.);
+    let center2 = center1 + Vec3::new(30., 0., 0.);
+    let moving_sphere_material = Arc::new(Lambertian::new(Vec3::new(0.7, 0.3, 0.1)));
+    world.add(Arc::new(MovingSphere::new(
+        center1,
+        center2,
+        0.,
+        1.,
+        50.,
+        moving_sphere_material,
+    )));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(260., 150., 45.),
+        50.,
+        Arc::new(Dielectric::new(1.5)),
+    )));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0., 150., 145.),
+        50.,
+        Arc::new(Metal::new(Vec3::new(0.8, 0.8, 0.9), 1.0)),
+    )));
+    let mut boundary = Arc::new(Sphere::new(
+        Vec3::new(360., 150., 145.),
+        70.,
+        Arc::new(Dielectric::new(1.5)),
+    ));
+    world.add(boundary.clone());
+    world.add(Arc::new(ConstantMedium::new(
+        boundary.clone(),
+        0.2,
+        Vec3::new(0.2, 0.4, 0.9),
+    )));
+    boundary = Arc::new(Sphere::new(
+        Vec3::new(0., 0., 0.),
+        5000.,
+        Arc::new(Dielectric::new(1.5)),
+    ));
+    world.add(Arc::new(ConstantMedium::new(
+        boundary,
+        0.0001,
+        Vec3::new(1., 1., 1.),
+    )));
 
-// }
+    let emat = Arc::new(Lambertian::new_texture(Arc::new(ImageTexture::new(
+        "input/earthmap.jpg",
+    ))));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(400., 200., 400.),
+        100.,
+        emat,
+    )));
+    let pertext = Arc::new(NoiseTexture::new(0.1));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(220., 280., 300.),
+        80.,
+        Arc::new(Lambertian::new_texture(pertext)),
+    )));
+    let mut boxes2 = HitList::new();
+    let white = Arc::new(Lambertian::new(Vec3::new(0.73, 0.73, 0.73)));
+    let ns = 1000;
+    for _j in 0..ns {
+        boxes2.add(Arc::new(Sphere::new(
+            Vec3::random_in_range(0., 165.),
+            10.,
+            white.clone(),
+        )));
+    }
+    world.add(Arc::new(Translate::new(
+        Arc::new(RotateY::new(
+            Arc::new(BVHNode::new(boxes2.list, 0., 1.)),
+            15.,
+        )),
+        Vec3::new(-100., 270., 395.),
+    )));
+    world
+}

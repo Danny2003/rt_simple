@@ -4,7 +4,6 @@ use crate::rt_weekend::*;
 use crate::Ray;
 use std::cmp::Ordering;
 use std::sync::Arc;
-use std::usize;
 use std::vec::Vec;
 #[derive(Clone)]
 pub struct BVHNode {
@@ -14,13 +13,7 @@ pub struct BVHNode {
     pub right: Arc<dyn Hittable>,
 }
 impl BVHNode {
-    pub fn new(
-        objects: &mut Vec<Arc<dyn Hittable>>,
-        start: usize,
-        end: usize,
-        time0: f64,
-        time1: f64,
-    ) -> Self {
+    pub fn new(mut objects: Vec<Arc<dyn Hittable>>, time0: f64, time1: f64) -> Self {
         // Create a modifiable array of the source scene objects
         let axis = random_int_in_range(0, 2);
         let comparator = if axis == 0 {
@@ -30,29 +23,30 @@ impl BVHNode {
         } else {
             box_z_compare
         }; // Choose a random axis to sort along
-        let object_span = end - start;
+        let object_span = objects.len();
         let left: Arc<dyn Hittable>;
         let right: Arc<dyn Hittable>;
         if object_span == 1 {
             // If there is only one object, return it as the left and right child.
-            left = objects[start].clone();
-            right = objects[start].clone();
+            left = objects.pop().unwrap();
+            right = left.clone();
         } else if object_span == 2 {
             // If there are two objects, return them as the left and right child.
-            if comparator(&objects[start], &objects[start + 1]) == Ordering::Less {
-                left = objects[start].clone();
-                right = objects[start + 1].clone();
+            if comparator(objects.first().unwrap(), objects.last().unwrap()) == Ordering::Less {
+                right = objects.pop().unwrap();
+                left = objects.pop().unwrap();
             } else {
-                left = objects[start + 1].clone();
-                right = objects[start].clone();
+                left = objects.pop().unwrap();
+                right = objects.pop().unwrap();
             }
         } else {
             // If there are more than two objects, sort the objects along the chosen axis.
-            objects[start..end].sort_by(comparator);
+            objects.sort_by(comparator);
             // Create the left and right child nodes.
-            let mid = start + object_span / 2;
-            left = Arc::new(Self::new(objects, start, mid, time0, time1));
-            right = Arc::new(Self::new(objects, mid, end, time0, time1));
+            let mut left_vec = objects;
+            let right_vec = left_vec.split_off(object_span / 2);
+            left = Arc::new(Self::new(left_vec, time0, time1));
+            right = Arc::new(Self::new(right_vec, time0, time1));
         }
         let mut box_left: AABB = Default::default();
         let mut box_right: AABB = Default::default();
@@ -65,17 +59,6 @@ impl BVHNode {
         // Calculate the bounding box of the left and right child nodes.
         let bbox = surrounding_box(box_left, box_right);
         Self { bbox, left, right }
-    }
-    pub fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
-        if !self.bbox.hit(ray, t_min, t_max) {
-            return false;
-        }
-        let hit_left = self.left.hit(ray, t_min, t_max, rec);
-        let hit_right = self.right.hit(ray, t_min, t_max, rec);
-        if hit_left || hit_right {
-            return true;
-        }
-        false
     }
 }
 impl Hittable for BVHNode {

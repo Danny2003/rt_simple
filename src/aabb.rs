@@ -1,5 +1,6 @@
 use crate::ray::Ray;
 use crate::vec3::Vec3;
+use std::mem::swap;
 #[derive(Clone, Debug, Copy)]
 #[allow(clippy::upper_case_acronyms)]
 pub struct AABB {
@@ -21,8 +22,8 @@ impl AABB {
             let inv_dir = 1.0 / *r.direction().get(a);
             let mut t0 = (*self.min().get(a) - *r.origin().get(a)) * inv_dir;
             let mut t1 = (*self.max().get(a) - *r.origin().get(a)) * inv_dir;
-            if inv_dir < 0. {
-                (t0, t1) = (t1, t0);
+            if t0 > t1 {
+                swap(&mut t0, &mut t1);
             }
             t_min = t0.max(t_min);
             t_max = t1.min(t_max);
@@ -49,5 +50,5 @@ pub fn surrounding_box(box0: AABB, box1: AABB) -> AABB {
         box0.max().y().max(box1.max().y()),
         box0.max().z().max(box1.max().z()),
     );
-    AABB { min, max }
+    AABB::new(min, max)
 }

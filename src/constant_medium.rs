@@ -3,6 +3,7 @@ use crate::rt_weekend::*;
 use crate::{aabb::AABB, material::*, texture::Texture, Ray, Vec3};
 use std::f64::consts::E;
 use std::f64::INFINITY;
+use std::f64::NEG_INFINITY;
 use std::sync::Arc;
 
 pub struct ConstantMedium {
@@ -54,7 +55,7 @@ impl Hittable for ConstantMedium {
         let mut rec1: HitRecord = Default::default();
         let mut rec2: HitRecord = Default::default();
 
-        if !self.boundary.hit(ray, -INFINITY, INFINITY, &mut rec1) {
+        if !self.boundary.hit(ray, NEG_INFINITY, INFINITY, &mut rec1) {
             return false;
         }
         if !self.boundary.hit(ray, rec1.t + 0.0001, INFINITY, &mut rec2) {

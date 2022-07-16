@@ -85,10 +85,10 @@ fn main() {
     );
     let begin_time = Instant::now();
 
-    const THREAD_NUMBER: usize = 16;
+    const THREAD_NUMBER: usize = 15;
 
     const AUTHOR: &str = "Youwei Zhong";
-    const PATH: &str = "output/Cornell_box_with_blocks_of_smoke.jpg";
+    const PATH: &str = "output/Final_scene_10000_samples_per_pixel.jpg";
 
     //---------------------------------------------------------------------------------
 
@@ -96,7 +96,7 @@ fn main() {
 
     let mut aspect_ratio: f64 = 16.0 / 9.0;
     let mut image_width: usize = 400;
-    let mut samples_per_pixel: usize = 100;
+    let mut samples_per_pixel: usize = 10000;
     /// Reflection max depth
     const MAX_DEPTH: i32 = 50;
     /// JPG_QUALITY
@@ -114,7 +114,7 @@ fn main() {
     // * `aperture` - aperture's radius of the camera
     let mut aperture = 0.;
     let background;
-    match 7 {
+    match 8 {
         1 => {
             hit_list = Arc::new(random_scene());
             background = Vec3::new(0.7, 0.8, 1.);
@@ -172,6 +172,16 @@ fn main() {
             look_at = Vec3::new(278., 278., 0.);
             vfov = 40.0;
         }
+        8 => {
+            hit_list = Arc::new(final_scene());
+            aspect_ratio = 1.0;
+            image_width = 800;
+            samples_per_pixel = 100;
+            background = Vec3::zero();
+            look_from = Vec3::new(478., 278., -600.);
+            look_at = Vec3::new(278., 278., 0.);
+            vfov = 40.0;
+        }
         _ => {
             hit_list = Arc::new(HitList::new());
             background = Vec3::zero();
@@ -180,13 +190,7 @@ fn main() {
             vfov = 40.0;
         }
     }
-    let world = Arc::new(BVHNode::new(
-        &mut hit_list.list.clone(),
-        0,
-        hit_list.list.len(),
-        0.,
-        1.,
-    ));
+    let world = Arc::new(BVHNode::new(hit_list.list.clone(), 0., 1.));
 
     // let r = (PI / 4.0).cos();
 
@@ -283,8 +287,8 @@ fn main() {
     let mut output_pixel_color = Vec::<Vec3>::new();
     let mut thread_pool = VecDeque::<_>::new();
     // Manages multiple progress bars from different threads
-    // let multiprogress = Arc::new(MultiProgress::new());
-    // multiprogress.set_move_cursor(true); // turn on this to reduce flickering
+    let multiprogress = Arc::new(MultiProgress::new());
+    multiprogress.set_move_cursor(true); // turn on this to reduce flickering
 
     for thread_id in 0..THREAD_NUMBER {
         let line_beg = section_line_num * thread_id;
@@ -295,25 +299,25 @@ fn main() {
         } else {
             line_beg + section_line_num
         };
-        // let mp = multiprogress.clone();
-        // // Progress bar UI powered by library `indicatif`
-        // // Get environment variable CI, which is true for GitHub Action
-        // let progress_bar = if option_env!("CI").unwrap_or_default() == "true" {
-        //     ProgressBar::hidden()
-        // } else {
-        //     mp.add(ProgressBar::new((line_end - line_beg) as u64))
-        // };
-        // progress_bar.set_style(ProgressStyle::default_bar()
-        // .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] [{pos}/{len}] ({eta})")
-        // .progress_chars("#>-"));
+        let mp = multiprogress.clone();
+        // Progress bar UI powered by library `indicatif`
+        // Get environment variable CI, which is true for GitHub Action
+        let progress_bar = if option_env!("CI").unwrap_or_default() == "true" {
+            ProgressBar::hidden()
+        } else {
+            mp.add(ProgressBar::new((line_end - line_beg) as u64))
+        };
+        progress_bar.set_style(ProgressStyle::default_bar()
+        .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] [{pos}/{len}] ({eta})")
+        .progress_chars("#>-"));
 
         let (tx, rx) = mpsc::channel();
         let camera_clone = camera.clone();
         let world_clone = world.clone();
         thread_pool.push_back((
             thread::spawn(move || {
-                // let mut progress = 0;
-                // progress_bar.set_position(0);
+                let mut progress = 0;
+                progress_bar.set_position(0);
 
                 let channel_send = tx.clone();
 
@@ -331,17 +335,17 @@ fn main() {
                         }
                         section_pixel_color.push(pixel_color);
                     }
-                    // progress += 1;
-                    // progress_bar.set_position(progress);
+                    progress += 1;
+                    progress_bar.set_position(progress);
                 }
                 channel_send.send(section_pixel_color).unwrap();
-                // progress_bar.finish_with_message("Finished.");
+                progress_bar.finish_with_message("Finished.");
             }),
             rx,
         ));
     }
     // 等待所有线程结束
-    // multiprogress.join().unwrap();
+    multiprogress.join().unwrap();
 
     //========================================================
 
