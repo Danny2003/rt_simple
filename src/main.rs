@@ -88,7 +88,7 @@ fn main() {
     const THREAD_NUMBER: usize = 15;
 
     const AUTHOR: &str = "Youwei Zhong";
-    const PATH: &str = "output/Final_scene_10000_samples_per_pixel.jpg";
+    const PATH: &str = "output/pumpkin_test.jpg";
 
     //---------------------------------------------------------------------------------
 
@@ -114,7 +114,7 @@ fn main() {
     // * `aperture` - aperture's radius of the camera
     let mut aperture = 0.;
     let background;
-    match 8 {
+    match 9 {
         1 => {
             hit_list = Arc::new(random_scene());
             background = Vec3::new(0.7, 0.8, 1.);
@@ -176,10 +176,20 @@ fn main() {
             hit_list = Arc::new(final_scene());
             aspect_ratio = 1.0;
             image_width = 800;
-            samples_per_pixel = 10000;
+            samples_per_pixel = 3000;
             background = Vec3::zero();
             look_from = Vec3::new(478., 278., -600.);
             look_at = Vec3::new(278., 278., 0.);
+            vfov = 40.0;
+        }
+        9 => {
+            hit_list = Arc::new(art_product());
+            aspect_ratio = 1.0;
+            image_width = 800;
+            samples_per_pixel = 100;
+            background = Vec3::zero();
+            look_from = Vec3::new(700., 350., 0.);
+            look_at = Vec3::new(0., 0., 0.);
             vfov = 40.0;
         }
         _ => {

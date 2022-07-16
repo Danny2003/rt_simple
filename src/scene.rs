@@ -375,3 +375,46 @@ pub fn final_scene() -> HitList {
     )));
     world
 }
+pub fn art_product() -> HitList {
+    let mut world = HitList::new();
+    let red = Arc::new(DiffuseLight::new(Vec3::new(5., 1., 1.)));
+    let green = Arc::new(DiffuseLight::new(Vec3::new(1., 5., 1.)));
+    let blue = Arc::new(DiffuseLight::new(Vec3::new(1., 1., 5.)));
+    let ground = Arc::new(Lambertian::new(Vec3::new(0.48, 0.83, 0.53)));
+
+    let boxes_per_side = 20;
+    for i in 0..boxes_per_side {
+        for j in 0..boxes_per_side {
+            let w = 100.0;
+            let x0 = -1000.0 + w * i as f64;
+            let z0 = -1000.0 + w * j as f64;
+            let y0 = 0.0;
+            let x1 = x0 + w;
+            let y1 = random_double_in_range(1., 31.);
+            let z1 = z0 + w;
+
+            world.add(Arc::new(CornellBox::new(
+                Vec3::new(x0, y0, z0),
+                Vec3::new(x1, y1, z1),
+                ground.clone(),
+            )));
+            let center = Vec3::new((x0 + x1) / 2., y1 + 20., (z0 + z1) / 2.);
+            if j % 3 == 0 {
+                world.add(Arc::new(Sphere::new(center, 20., red.clone())));
+            } else if j % 3 == 1 {
+                world.add(Arc::new(Sphere::new(center, 20., green.clone())));
+            } else {
+                world.add(Arc::new(Sphere::new(center, 20., blue.clone())));
+            }
+        }
+    }
+    let pumpkin = Arc::new(DiffuseLight::new_texture(Arc::new(ImageTexture::new(
+        "input/pumpkin_head.jpg",
+    ))));
+    world.add(Arc::new(Sphere::new(
+        Vec3::new(0., 200., 0.),
+        100.,
+        pumpkin,
+    )));
+    world
+}
